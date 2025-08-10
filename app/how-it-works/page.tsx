@@ -81,7 +81,7 @@ const benefits = [
 const faqs = [
   {
     question: 'How do I book a facility?',
-    answer: 'Simply search for facilities in your area, select your preferred date and time, and complete the secure payment process. You\'ll receive instant confirmation.'
+    answer: 'Simply search for facilities in your area, select your preferred date and time, and complete the secure payment process. You&apos;ll receive instant confirmation.'
   },
   {
     question: 'Can I cancel or reschedule my booking?',
@@ -93,7 +93,7 @@ const faqs = [
   },
   {
     question: 'How do I list my facility?',
-    answer: 'Click on "List Your Facility" in the navigation menu, fill out the detailed form with your facility information, and submit for review. We\'ll get back to you within 24 hours.'
+    answer: 'Click on "List Your Facility" in the navigation menu, fill out the detailed form with your facility information, and submit for review. We&apos;ll get back to you within 24 hours.'
   },
   {
     question: 'Is there a booking fee?',
@@ -101,7 +101,7 @@ const faqs = [
   },
   {
     question: 'What if I have issues with a facility?',
-    answer: 'Contact our support team immediately. We\'re here to help resolve any issues and ensure you have a great experience.'
+    answer: 'Contact our support team immediately. We&apos;re here to help resolve any issues and ensure you have a great experience.'
   }
 ]
 

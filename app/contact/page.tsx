@@ -28,7 +28,7 @@ export default function ContactPage() {
     // Simulate API call
     setTimeout(() => {
       console.log('Contact form submitted:', formData)
-      alert('Thank you for your message! We\'ll get back to you within 24 hours.')
+      alert('Thank you for your message! We&apos;ll get back to you within 24 hours.')
       setFormData({
         name: '',
         email: '',

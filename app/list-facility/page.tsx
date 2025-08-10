@@ -348,6 +348,7 @@ export default function ListFacilityPage() {
                   <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4">
                     {formData.images.map((file, index) => (
                       <div key={index} className="relative">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
                           src={URL.createObjectURL(file)}
                           alt={`Upload ${index + 1}`}
