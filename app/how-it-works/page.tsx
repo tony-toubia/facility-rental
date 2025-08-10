@@ -117,7 +117,7 @@ export default function HowItWorksPage() {
             </h1>
             <p className="text-xl text-blue-100 max-w-3xl mx-auto">
               Discover how easy it is to find and book the perfect facility for your needs. 
-              From search to play, we've made the process simple and secure.
+              From search to play, we&apos;ve made the process simple and secure.
             </p>
           </div>
         </div>
@@ -196,7 +196,7 @@ export default function HowItWorksPage() {
               Why Choose FacilityRent?
             </h2>
             <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-              We're committed to providing the best experience for both facility renters and owners.
+              We&apos;re committed to providing the best experience for both facility renters and owners.
             </p>
           </div>
 
@@ -229,7 +229,7 @@ export default function HowItWorksPage() {
               Frequently Asked Questions
             </h2>
             <p className="text-xl text-gray-600">
-              Got questions? We've got answers.
+              Got questions? We&apos;ve got answers.
             </p>
           </div>
 

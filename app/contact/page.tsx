@@ -50,7 +50,7 @@ export default function ContactPage() {
               Get in Touch
             </h1>
             <p className="text-xl text-blue-100 max-w-3xl mx-auto">
-              Have questions? Need help? We're here to assist you. 
+              Have questions? Need help? We&apos;re here to assist you. 
               Reach out to our friendly support team.
             </p>
           </div>
