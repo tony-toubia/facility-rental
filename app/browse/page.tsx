@@ -87,6 +87,8 @@ export default function BrowsePage() {
       setLoading(true)
       setError(null)
       
+      console.log('Loading facilities with user location:', userLocation)
+      
       let query = supabase
         .from('facility_facilities')
         .select(`
@@ -111,10 +113,37 @@ export default function BrowsePage() {
         .eq('status', 'active')
 
       // Apply location-based filtering if we have user location
-      if (userLocation?.data.city && userLocation?.data.state) {
-        // For now, filter by exact city/state match
-        // TODO: Implement radius-based filtering with coordinates
-        query = query.or(`city.ilike.%${userLocation.data.city}%,state.ilike.%${userLocation.data.state}%`)
+      if (userLocation?.data) {
+        const { city, state, latitude, longitude } = userLocation.data
+        
+        if (latitude && longitude) {
+          // Use radius-based filtering with coordinates (within ~25 miles)
+          const radiusInDegrees = 0.36 // Approximately 25 miles
+          console.log('Applying coordinate-based filtering:', {
+            userLat: latitude,
+            userLng: longitude,
+            radius: radiusInDegrees
+          })
+          query = query
+            .gte('latitude', latitude - radiusInDegrees)
+            .lte('latitude', latitude + radiusInDegrees)
+            .gte('longitude', longitude - radiusInDegrees)
+            .lte('longitude', longitude + radiusInDegrees)
+        } else if (city && state) {
+          // Filter by exact state and city (case-insensitive)
+          console.log('Applying city/state-based filtering:', { city, state })
+          query = query
+            .eq('state', state)
+            .ilike('city', `%${city}%`)
+        } else if (state) {
+          // Fallback to state-based filtering only
+          console.log('Applying state-only filtering:', state)
+          query = query.eq('state', state)
+        } else {
+          console.log('Location data incomplete - showing all facilities')
+        }
+      } else {
+        console.log('No location data available - showing all facilities')
       }
 
       const { data, error } = await query.order('created_at', { ascending: false })
@@ -123,7 +152,14 @@ export default function BrowsePage() {
         console.error('Error loading facilities:', error)
         setError(`Failed to load facilities: ${error.message}`)
       } else {
-        console.log('Loaded facilities:', data)
+        console.log('Loaded facilities count:', data?.length)
+        console.log('Sample facility locations:', data?.slice(0, 3).map(f => ({
+          name: f.name,
+          city: f.city,
+          state: f.state,
+          lat: f.latitude,
+          lng: f.longitude
+        })))
         setFacilities(data || [])
       }
     } catch (err) {
@@ -161,6 +197,11 @@ export default function BrowsePage() {
     await loadUserLocation()
   }
 
+  const handleShowAll = () => {
+    setUserLocation(null)
+    setLocationQuery('')
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -170,14 +211,22 @@ export default function BrowsePage() {
           
           {/* Location Display */}
           {userLocation && (
-            <div className="mb-4 flex items-center text-sm text-gray-600">
-              <Navigation className="w-4 h-4 mr-2" />
-              <span>
-                Showing facilities near <strong>{formatLocationDisplay(userLocation)}</strong>
-                <span className="ml-1 text-gray-500">
-                  ({getLocationSourceDescription(userLocation.source)})
+            <div className="mb-4 flex items-center justify-between">
+              <div className="flex items-center text-sm text-gray-600">
+                <Navigation className="w-4 h-4 mr-2" />
+                <span>
+                  Showing facilities near <strong>{formatLocationDisplay(userLocation)}</strong>
+                  <span className="ml-1 text-gray-500">
+                    ({getLocationSourceDescription(userLocation.source)})
+                  </span>
                 </span>
-              </span>
+              </div>
+              <button
+                onClick={handleShowAll}
+                className="text-sm text-primary-600 hover:text-primary-500 font-medium"
+              >
+                Show All Facilities
+              </button>
             </div>
           )}
           
@@ -194,16 +243,25 @@ export default function BrowsePage() {
                   className="input-field pl-10"
                 />
               </div>
-              <div className="flex-1 relative">
-                <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                <input
-                  type="text"
-                  value={locationQuery}
-                  onChange={(e) => setLocationQuery(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && handleLocationSearch()}
-                  placeholder="City, State or Zip Code"
-                  className="input-field pl-10"
-                />
+              <div className="flex-1 flex gap-2">
+                <div className="flex-1 relative">
+                  <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                  <input
+                    type="text"
+                    value={locationQuery}
+                    onChange={(e) => setLocationQuery(e.target.value)}
+                    onKeyPress={(e) => e.key === 'Enter' && handleLocationSearch()}
+                    placeholder="City, State or Zip Code"
+                    className="input-field pl-10"
+                  />
+                </div>
+                <button
+                  onClick={handleLocationSearch}
+                  className="btn-primary px-4"
+                  disabled={locationLoading}
+                >
+                  {locationLoading ? 'Searching...' : 'Search'}
+                </button>
               </div>
             </div>
             <button
