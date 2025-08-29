@@ -34,9 +34,13 @@ A modern Next.js application that connects facility owners with people looking t
 ## Technology Stack
 
 - **Frontend**: Next.js 14, React 18, TypeScript
+- **Backend**: Supabase (PostgreSQL, Authentication, Storage)
 - **Styling**: Tailwind CSS
 - **Icons**: Lucide React
 - **Image Handling**: Next.js Image Optimization
+- **Deployment**: Vercel
+- **Database**: PostgreSQL with Supabase
+- **Authentication**: Supabase Auth
 - **Responsive Design**: Mobile-first approach
 
 ## Getting Started
@@ -44,12 +48,13 @@ A modern Next.js application that connects facility owners with people looking t
 ### Prerequisites
 - Node.js 18+ 
 - npm or yarn
+- Supabase account and project
 
 ### Installation
 
 1. Clone the repository:
 ```bash
-git clone <repository-url>
+git clone https://github.com/tony-toubia/facility-rental.git
 cd facility-rental
 ```
 
@@ -58,12 +63,36 @@ cd facility-rental
 npm install
 ```
 
-3. Run the development server:
+3. Set up environment variables:
+```bash
+cp .env.local.example .env.local
+```
+Edit `.env.local` with your Supabase credentials:
+```env
+NEXT_PUBLIC_SUPABASE_URL=https://your-project-id.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+```
+
+4. Set up the database:
+   - Go to your Supabase dashboard
+   - Open the SQL Editor
+   - Run the contents of `facility-rental-addon-schema.sql`
+   - Optionally run `scripts/seed-data.sql` for sample data
+
+5. Run the development server:
 ```bash
 npm run dev
 ```
 
-4. Open [http://localhost:3000](http://localhost:3000) in your browser.
+6. Open [http://localhost:3000](http://localhost:3000) in your browser.
+
+### Testing the Setup
+- Visit `/admin` to test database connectivity
+- Use the admin panel to create sample data if needed
+
+## Deployment
+
+See [DEPLOYMENT.md](./DEPLOYMENT.md) for detailed deployment instructions for Vercel and other platforms.
 
 ## Project Structure
 
