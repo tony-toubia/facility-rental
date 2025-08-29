@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { CheckCircle, XCircle, Eye, Clock, MapPin, DollarSign } from 'lucide-react'
+import Image from 'next/image'
 
 interface Facility {
   id: string
@@ -23,6 +24,10 @@ interface Facility {
     last_name: string
     email: string
   }
+  facility_images?: {
+    image_url: string
+    is_primary: boolean
+  }[]
 }
 
 export default function AdminPage() {
@@ -50,6 +55,10 @@ export default function AdminPage() {
             first_name,
             last_name,
             email
+          ),
+          facility_images (
+            image_url,
+            is_primary
           )
         `)
         .eq('status', 'pending_approval')
@@ -316,12 +325,29 @@ export default function AdminPage() {
                 </div>
               ) : (
                 <div className="space-y-6">
-                  {pendingFacilities.map((facility) => (
+                  {pendingFacilities.map((facility) => {
+                    const primaryImage = facility.facility_images?.find(img => img.is_primary)?.image_url || 
+                                       facility.facility_images?.[0]?.image_url
+                    
+                    return (
                     <div key={facility.id} className="border border-gray-200 rounded-lg p-6">
                       <div className="flex justify-between items-start mb-4">
-                        <div>
-                          <h3 className="text-lg font-semibold text-gray-900">{facility.name}</h3>
-                          <p className="text-sm text-gray-600">{facility.type}</p>
+                        <div className="flex space-x-4">
+                          {primaryImage && (
+                            <div className="relative w-24 h-24 rounded-lg overflow-hidden flex-shrink-0">
+                              <Image
+                                src={primaryImage}
+                                alt={facility.name}
+                                fill
+                                className="object-cover"
+                                sizes="96px"
+                              />
+                            </div>
+                          )}
+                          <div>
+                            <h3 className="text-lg font-semibold text-gray-900">{facility.name}</h3>
+                            <p className="text-sm text-gray-600">{facility.type}</p>
+                          </div>
                         </div>
                         <div className="flex space-x-2">
                           <button
@@ -383,7 +409,8 @@ export default function AdminPage() {
                         </div>
                       )}
                     </div>
-                  ))}
+                    )
+                  })}
                 </div>
               )}
             </div>
