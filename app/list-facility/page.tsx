@@ -142,7 +142,7 @@ export default function ListFacilityPage() {
         country: 'US', // Default to US for now
         price: parseFloat(formData.price),
         price_unit: formData.priceUnit,
-        capacity: formData.capacity ? parseInt(formData.capacity) : null,
+        capacity: formData.capacity ? parseInt(formData.capacity) : undefined,
         status: 'pending_approval' as const
       }
 
