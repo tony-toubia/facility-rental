@@ -229,11 +229,14 @@ export async function getFacilityUser(id: string): Promise<FacilityUser | null> 
 }
 
 export async function getFacilityUserByAuthId(authId: string): Promise<FacilityUser | null> {
+  console.log('getFacilityUserByAuthId called with:', authId)
   const { data, error } = await supabase
     .from('facility_users')
     .select('*')
     .eq('auth_user_id', authId)
     .single()
+
+  console.log('getFacilityUserByAuthId result - data:', data, 'error:', error)
 
   if (error) {
     console.error('Error fetching facility user by auth ID:', error)
@@ -258,11 +261,14 @@ export async function createFacilityUser(user: {
   zip_code?: string
   country?: string
 }): Promise<FacilityUser | null> {
+  console.log('createFacilityUser called with:', user)
   const { data, error } = await supabase
     .from('facility_users')
     .insert(user)
     .select()
     .single()
+
+  console.log('createFacilityUser result - data:', data, 'error:', error)
 
   if (error) {
     console.error('Error creating facility user:', error)
