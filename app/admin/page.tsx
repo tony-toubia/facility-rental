@@ -248,7 +248,7 @@ export default function AdminPage() {
                 <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
                   <h3 className="font-medium text-blue-800 mb-2">Fix RLS Policies (if getting permission errors):</h3>
                   <p className="text-sm text-blue-700 mb-2">
-                    If you're getting "row-level security policy" errors, run the fix-rls-policies.sql script:
+                    If you&apos;re getting &quot;row-level security policy&quot; errors, run the fix-rls-policies.sql script:
                   </p>
                   <ol className="text-sm text-blue-700 space-y-1 list-decimal list-inside">
                     <li>Go to your Supabase dashboard</li>
