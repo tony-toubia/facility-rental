@@ -15,6 +15,9 @@ interface AuthContextType {
     firstName: string
     lastName: string
     userType?: 'renter' | 'owner'
+    city?: string
+    state?: string
+    zipCode?: string
   }) => Promise<{ error: any }>
   signOut: () => Promise<void>
   refreshFacilityUser: () => Promise<void>

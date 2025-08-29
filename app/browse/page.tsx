@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { Search, Filter, MapPin, Star, DollarSign, Grid, List, Navigation } from 'lucide-react'
@@ -63,24 +63,14 @@ export default function BrowsePage() {
   const [userLocation, setUserLocation] = useState<UserLocation | null>(null)
   const [locationLoading, setLocationLoading] = useState(true)
 
-  // Load user location on component mount
-  useEffect(() => {
-    loadUserLocation()
-  }, [facilityUser])
-
-  // Fetch facilities from database
-  useEffect(() => {
-    loadFacilities()
-  }, [userLocation])
-
-  const loadUserLocation = async () => {
+  const loadUserLocation = useCallback(async () => {
     try {
       setLocationLoading(true)
       
       const profileLocation = facilityUser ? {
-        city: facilityUser.city,
-        state: facilityUser.state,
-        zip_code: facilityUser.zip_code
+        city: facilityUser.city || undefined,
+        state: facilityUser.state || undefined,
+        zip_code: facilityUser.zip_code || undefined
       } : undefined
       
       const location = await getUserLocation(profileLocation, locationQuery)
@@ -90,9 +80,9 @@ export default function BrowsePage() {
     } finally {
       setLocationLoading(false)
     }
-  }
+  }, [facilityUser, locationQuery])
 
-  const loadFacilities = async () => {
+  const loadFacilities = useCallback(async () => {
     try {
       setLoading(true)
       setError(null)
@@ -142,7 +132,17 @@ export default function BrowsePage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [userLocation])
+
+  // Load user location on component mount
+  useEffect(() => {
+    loadUserLocation()
+  }, [loadUserLocation])
+
+  // Fetch facilities from database
+  useEffect(() => {
+    loadFacilities()
+  }, [loadFacilities])
 
   const filteredFacilities = facilities.filter(facility => {
     const matchesSearch = facility.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
