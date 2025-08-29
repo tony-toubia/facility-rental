@@ -1,91 +1,46 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { Search, Filter, MapPin, Star, DollarSign, Grid, List } from 'lucide-react'
+import { supabase } from '@/lib/supabase'
 
-// Mock data for facilities
-const facilities = [
-  {
-    id: 1,
-    name: 'Elite Fitness Center',
-    type: 'Gym & Fitness',
-    location: 'Downtown, New York',
-    rating: 4.8,
-    reviewCount: 124,
-    price: 25,
-    priceUnit: 'hour',
-    image: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=500&h=300&fit=crop',
-    features: ['Full Equipment', 'Personal Training', 'Locker Rooms'],
-    availability: 'Available Today'
-  },
-  {
-    id: 2,
-    name: 'Aqua Sports Complex',
-    type: 'Swimming Pool',
-    location: 'Westside, Los Angeles',
-    rating: 4.9,
-    reviewCount: 89,
-    price: 40,
-    priceUnit: 'hour',
-    image: 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=500&h=300&fit=crop',
-    features: ['Olympic Size', 'Heated Pool', 'Diving Board'],
-    availability: 'Available Tomorrow'
-  },
-  {
-    id: 3,
-    name: 'Championship Courts',
-    type: 'Basketball Court',
-    location: 'Midtown, Chicago',
-    rating: 4.7,
-    reviewCount: 156,
-    price: 35,
-    priceUnit: 'hour',
-    image: 'https://images.unsplash.com/photo-1546519638-68e109498ffc?w=500&h=300&fit=crop',
-    features: ['Professional Court', 'Sound System', 'Scoreboard'],
-    availability: 'Available Now'
-  },
-  {
-    id: 4,
-    name: 'Zen Yoga Studio',
-    type: 'Yoga Studio',
-    location: 'Brooklyn, New York',
-    rating: 4.9,
-    reviewCount: 67,
-    price: 20,
-    priceUnit: 'hour',
-    image: 'https://images.unsplash.com/photo-1506629905607-d405d7d3b0d2?w=500&h=300&fit=crop',
-    features: ['Peaceful Environment', 'Props Included', 'Natural Light'],
-    availability: 'Available Today'
-  },
-  {
-    id: 5,
-    name: 'Metro Tennis Club',
-    type: 'Tennis Court',
-    location: 'Upper East Side, New York',
-    rating: 4.6,
-    reviewCount: 93,
-    price: 45,
-    priceUnit: 'hour',
-    image: 'https://images.unsplash.com/photo-1622279457486-62dcc4a431d6?w=500&h=300&fit=crop',
-    features: ['Clay Courts', 'Equipment Rental', 'Lighting'],
-    availability: 'Available Today'
-  },
-  {
-    id: 6,
-    name: 'PowerLift Gym',
-    type: 'Gym & Fitness',
-    location: 'South Beach, Miami',
-    rating: 4.5,
-    reviewCount: 201,
-    price: 30,
-    priceUnit: 'hour',
-    image: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=500&h=300&fit=crop',
-    features: ['Heavy Weights', '24/7 Access', 'Sauna'],
-    availability: 'Available Now'
+interface Facility {
+  id: string
+  name: string
+  type: string
+  description: string
+  address: string
+  city: string
+  state: string
+  price: number
+  price_unit: string
+  capacity: number
+  rating: number | null
+  review_count: number | null
+  status: string
+  created_at: string
+  owner_id: string
+  facility_users?: {
+    first_name: string
+    last_name: string
+    email: string
   }
-]
+  facility_images?: {
+    image_url: string
+    is_primary: boolean
+  }[]
+  facility_amenities?: {
+    name: string
+    icon_name: string | null
+  }[]
+  facility_features?: {
+    name: string
+  }[]
+}
+
+
 
 const categories = ['All', 'Gym & Fitness', 'Swimming Pool', 'Basketball Court', 'Tennis Court', 'Yoga Studio']
 const priceRanges = ['All', '$0-25', '$26-50', '$51-75', '$76+']
@@ -98,6 +53,58 @@ export default function BrowsePage() {
   const [sortBy, setSortBy] = useState('Relevance')
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
   const [showFilters, setShowFilters] = useState(false)
+  const [facilities, setFacilities] = useState<Facility[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  // Fetch facilities from database
+  useEffect(() => {
+    loadFacilities()
+  }, [])
+
+  const loadFacilities = async () => {
+    try {
+      setLoading(true)
+      setError(null)
+      
+      const { data, error } = await supabase
+        .from('facility_facilities')
+        .select(`
+          *,
+          facility_users:owner_id (
+            first_name,
+            last_name,
+            email
+          ),
+          facility_images (
+            image_url,
+            is_primary
+          ),
+          facility_amenities (
+            name,
+            icon_name
+          ),
+          facility_features (
+            name
+          )
+        `)
+        .eq('status', 'active')
+        .order('created_at', { ascending: false })
+
+      if (error) {
+        console.error('Error loading facilities:', error)
+        setError(`Failed to load facilities: ${error.message}`)
+      } else {
+        console.log('Loaded facilities:', data)
+        setFacilities(data || [])
+      }
+    } catch (err) {
+      console.error('Error:', err)
+      setError(`Error: ${err}`)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const filteredFacilities = facilities.filter(facility => {
     const matchesSearch = facility.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -232,77 +239,110 @@ export default function BrowsePage() {
               ? 'grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6' 
               : 'space-y-4'
             }>
-              {filteredFacilities.map((facility) => (
-                <Link
-                  key={facility.id}
-                  href={`/facility/${facility.id}`}
-                  className={`card overflow-hidden hover:shadow-lg transition-shadow duration-200 group ${
-                    viewMode === 'list' ? 'flex' : ''
-                  }`}
-                >
-                  <div className={`relative ${viewMode === 'list' ? 'w-48 h-32' : 'h-48'}`}>
-                    <Image
-                      src={facility.image}
-                      alt={facility.name}
-                      fill
-                      className="object-cover group-hover:scale-105 transition-transform duration-200"
-                    />
-                    <div className="absolute top-3 right-3 bg-white px-2 py-1 rounded-full text-xs font-medium text-green-600">
-                      {facility.availability}
-                    </div>
-                  </div>
-
-                  <div className="p-4 flex-1">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm text-primary-600 font-medium">{facility.type}</span>
-                      <div className="flex items-center space-x-1">
-                        <Star className="w-4 h-4 text-yellow-400 fill-current" />
-                        <span className="text-sm font-medium">{facility.rating}</span>
-                        <span className="text-sm text-gray-500">({facility.reviewCount})</span>
+              {loading ? (
+                <div className="text-center py-12">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mx-auto"></div>
+                  <p className="mt-2 text-gray-600">Loading facilities...</p>
+                </div>
+              ) : error ? (
+                <div className="text-center py-12">
+                  <p className="text-red-500 text-lg">{error}</p>
+                  <button 
+                    onClick={loadFacilities}
+                    className="mt-4 btn-primary"
+                  >
+                    Try Again
+                  </button>
+                </div>
+              ) : filteredFacilities.length === 0 ? (
+                <div className="text-center py-12">
+                  <p className="text-gray-500 text-lg">No facilities found matching your criteria.</p>
+                  <p className="text-gray-400 mt-2">Try adjusting your filters or search terms.</p>
+                </div>
+              ) : (
+                filteredFacilities.map((facility) => {
+                  const primaryImage = facility.facility_images?.find(img => img.is_primary)?.image_url || 
+                                     facility.facility_images?.[0]?.image_url ||
+                                     'https://via.placeholder.com/500x300?text=No+Image'
+                  
+                  const location = `${facility.city}, ${facility.state}`
+                  const features = facility.facility_features?.map(f => f.name) || []
+                  const amenities = facility.facility_amenities?.map(a => a.name) || []
+                  const allFeatures = [...features, ...amenities].slice(0, 3) // Show max 3 features
+                  
+                  return (
+                    <Link
+                      key={facility.id}
+                      href={`/facility/${facility.id}`}
+                      className={`card overflow-hidden hover:shadow-lg transition-shadow duration-200 group ${
+                        viewMode === 'list' ? 'flex' : ''
+                      }`}
+                    >
+                      <div className={`relative ${viewMode === 'list' ? 'w-48 h-32' : 'h-48'}`}>
+                        <Image
+                          src={primaryImage}
+                          alt={facility.name}
+                          fill
+                          className="object-cover group-hover:scale-105 transition-transform duration-200"
+                          onError={(e) => {
+                            e.currentTarget.src = 'https://via.placeholder.com/500x300?text=No+Image'
+                          }}
+                        />
+                        <div className="absolute top-3 right-3 bg-white px-2 py-1 rounded-full text-xs font-medium text-green-600">
+                          Available
+                        </div>
                       </div>
-                    </div>
 
-                    <h3 className="text-lg font-semibold text-gray-900 mb-2 group-hover:text-primary-600 transition-colors">
-                      {facility.name}
-                    </h3>
+                      <div className="p-4 flex-1">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-sm text-primary-600 font-medium">{facility.type}</span>
+                          <div className="flex items-center space-x-1">
+                            <Star className="w-4 h-4 text-yellow-400 fill-current" />
+                            <span className="text-sm font-medium">{facility.rating || 'New'}</span>
+                            {facility.review_count && (
+                              <span className="text-sm text-gray-500">({facility.review_count})</span>
+                            )}
+                          </div>
+                        </div>
 
-                    <div className="flex items-center text-gray-600 text-sm mb-3">
-                      <MapPin className="w-4 h-4 mr-1" />
-                      {facility.location}
-                    </div>
+                        <h3 className="text-lg font-semibold text-gray-900 mb-2 group-hover:text-primary-600 transition-colors">
+                          {facility.name}
+                        </h3>
 
-                    <div className="flex flex-wrap gap-1 mb-3">
-                      {facility.features.map((feature, index) => (
-                        <span
-                          key={index}
-                          className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-full"
-                        >
-                          {feature}
-                        </span>
-                      ))}
-                    </div>
+                        <div className="flex items-center text-gray-600 text-sm mb-3">
+                          <MapPin className="w-4 h-4 mr-1" />
+                          {location}
+                        </div>
 
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center text-gray-900">
-                        <DollarSign className="w-4 h-4" />
-                        <span className="font-semibold">{facility.price}</span>
-                        <span className="text-sm text-gray-600">/{facility.priceUnit}</span>
+                        {allFeatures.length > 0 && (
+                          <div className="flex flex-wrap gap-1 mb-3">
+                            {allFeatures.map((feature, index) => (
+                              <span
+                                key={index}
+                                className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-full"
+                              >
+                                {feature}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center text-gray-900">
+                            <DollarSign className="w-4 h-4" />
+                            <span className="font-semibold">{facility.price}</span>
+                            <span className="text-sm text-gray-600">/{facility.price_unit}</span>
+                          </div>
+                          <button className="text-primary-600 text-sm font-medium hover:text-primary-700">
+                            View Details →
+                          </button>
+                        </div>
                       </div>
-                      <button className="text-primary-600 text-sm font-medium hover:text-primary-700">
-                        View Details →
-                      </button>
-                    </div>
-                  </div>
-                </Link>
-              ))}
+                    </Link>
+                  )
+                })
+              )}
             </div>
-
-            {filteredFacilities.length === 0 && (
-              <div className="text-center py-12">
-                <p className="text-gray-500 text-lg">No facilities found matching your criteria.</p>
-                <p className="text-gray-400 mt-2">Try adjusting your filters or search terms.</p>
-              </div>
-            )}
           </div>
         </div>
       </div>
