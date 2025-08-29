@@ -17,6 +17,7 @@ interface AuthContextType {
     userType?: 'renter' | 'owner'
   }) => Promise<{ error: any }>
   signOut: () => Promise<void>
+  refreshFacilityUser: () => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -40,11 +41,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        console.log('🔔 Auth state change event:', event, 'Session:', session?.user?.id)
         setUser(session?.user ?? null)
         
         if (session?.user) {
+          console.log('👤 User session exists, loading facility user...')
           await loadFacilityUser(session.user.id)
         } else {
+          console.log('❌ No user session, clearing facility user')
           setFacilityUser(null)
           setLoading(false)
         }
@@ -56,20 +60,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const loadFacilityUser = async (authUserId: string) => {
     try {
-      console.log('Loading facility user for auth ID:', authUserId)
+      console.log('🔄 Loading facility user for auth ID:', authUserId)
       let facilityUser = await getFacilityUserByAuthId(authUserId)
-      console.log('Found existing facility user:', facilityUser)
+      console.log('🔍 Found existing facility user:', facilityUser)
       
       // If no facility user exists, create one from auth user data
       if (!facilityUser) {
-        console.log('No facility user found, creating new one...')
+        console.log('➕ No facility user found, creating new one...')
         const { data: authUser, error: authError } = await supabase.auth.getUser()
-        console.log('Auth user data:', authUser, 'Auth error:', authError)
+        console.log('👤 Auth user data:', authUser, 'Auth error:', authError)
         
         if (authUser.user) {
           const userData = authUser.user.user_metadata || {}
-          console.log('Auth user metadata:', userData)
-          console.log('Auth user email:', authUser.user.email)
+          console.log('📋 Auth user metadata:', userData)
+          console.log('📧 Auth user email:', authUser.user.email)
           
           const newUserData = {
             auth_user_id: authUserId,
@@ -78,19 +82,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             email: authUser.user.email || '',
             user_type: userData.user_type || userData.userType || 'renter'
           }
-          console.log('Creating facility user with data:', newUserData)
+          console.log('🆕 Creating facility user with data:', newUserData)
           
           facilityUser = await createFacilityUser(newUserData)
-          console.log('Created facility user result:', facilityUser)
+          console.log('✅ Created facility user result:', facilityUser)
         } else {
-          console.error('No auth user found when trying to create facility user')
+          console.error('❌ No auth user found when trying to create facility user')
         }
       }
       
-      console.log('Final facility user being set:', facilityUser)
+      console.log('🎯 Final facility user being set:', facilityUser)
+      console.log('🎯 Previous facilityUser state:', facilityUser)
       setFacilityUser(facilityUser)
+      console.log('✅ Facility user state updated')
     } catch (error) {
-      console.error('Error in loadFacilityUser:', error)
+      console.error('❌ Error in loadFacilityUser:', error)
+      setFacilityUser(null)
     } finally {
       setLoading(false)
     }
@@ -131,13 +138,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await supabase.auth.signOut()
   }
 
+  const refreshFacilityUser = async () => {
+    if (user?.id) {
+      console.log('🔄 Manually refreshing facility user...')
+      await loadFacilityUser(user.id)
+    }
+  }
+
   const value = {
     user,
     facilityUser,
     loading,
     signIn,
     signUp,
-    signOut
+    signOut,
+    refreshFacilityUser
   }
 
   return (

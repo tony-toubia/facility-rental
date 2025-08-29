@@ -7,7 +7,7 @@ import { useAuth } from '@/lib/auth'
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
-  const { user, facilityUser, signOut } = useAuth()
+  const { user, facilityUser, signOut, refreshFacilityUser } = useAuth()
 
   return (
     <header className="bg-white shadow-sm border-b">
@@ -40,6 +40,15 @@ export default function Header() {
               <>
                 <span className="text-gray-700">
                   Welcome, {facilityUser?.first_name || user.email}
+                  {user && !facilityUser?.first_name && (
+                    <button 
+                      onClick={refreshFacilityUser}
+                      className="ml-2 text-xs text-primary-600 hover:text-primary-700"
+                      title="Refresh user data"
+                    >
+                      🔄
+                    </button>
+                  )}
                 </span>
                 <button
                   onClick={signOut}
@@ -100,6 +109,15 @@ export default function Header() {
                   <>
                     <span className="text-gray-700">
                       Welcome, {facilityUser?.first_name || user.email}
+                      {user && !facilityUser?.first_name && (
+                        <button 
+                          onClick={refreshFacilityUser}
+                          className="ml-2 text-xs text-primary-600 hover:text-primary-700"
+                          title="Refresh user data"
+                        >
+                          🔄
+                        </button>
+                      )}
                     </span>
                     <button
                       onClick={() => {
