@@ -1,11 +1,92 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
+import { CheckCircle, XCircle, Eye, Clock, MapPin, DollarSign } from 'lucide-react'
+
+interface Facility {
+  id: string
+  name: string
+  type: string
+  description: string
+  address: string
+  city: string
+  state: string
+  price: number
+  price_unit: string
+  capacity: number
+  status: string
+  created_at: string
+  owner_id: string
+  facility_users?: {
+    first_name: string
+    last_name: string
+    email: string
+  }
+}
 
 export default function AdminPage() {
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
+  const [activeTab, setActiveTab] = useState<'review' | 'testing'>('review')
+  const [pendingFacilities, setPendingFacilities] = useState<Facility[]>([])
+  const [reviewLoading, setReviewLoading] = useState(false)
+
+  // Load pending facilities on component mount
+  useEffect(() => {
+    if (activeTab === 'review') {
+      loadPendingFacilities()
+    }
+  }, [activeTab])
+
+  const loadPendingFacilities = async () => {
+    setReviewLoading(true)
+    try {
+      const { data, error } = await supabase
+        .from('facility_facilities')
+        .select(`
+          *,
+          facility_users:owner_id (
+            first_name,
+            last_name,
+            email
+          )
+        `)
+        .eq('status', 'pending_approval')
+        .order('created_at', { ascending: false })
+
+      if (error) {
+        console.error('Error loading pending facilities:', error)
+        setMessage(`❌ Error loading facilities: ${error.message}`)
+      } else {
+        setPendingFacilities(data || [])
+      }
+    } catch (err) {
+      console.error('Error:', err)
+      setMessage(`❌ Error: ${err}`)
+    } finally {
+      setReviewLoading(false)
+    }
+  }
+
+  const updateFacilityStatus = async (facilityId: string, newStatus: 'active' | 'rejected') => {
+    try {
+      const { error } = await supabase
+        .from('facility_facilities')
+        .update({ status: newStatus, updated_at: new Date().toISOString() })
+        .eq('id', facilityId)
+
+      if (error) {
+        setMessage(`❌ Error updating facility: ${error.message}`)
+      } else {
+        setMessage(`✅ Facility ${newStatus === 'active' ? 'approved' : 'rejected'} successfully!`)
+        // Reload the pending facilities list
+        loadPendingFacilities()
+      }
+    } catch (err) {
+      setMessage(`❌ Error: ${err}`)
+    }
+  }
 
   const testConnection = async () => {
     setLoading(true)
@@ -173,11 +254,143 @@ export default function AdminPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 py-12">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="bg-white rounded-lg shadow p-6">
           <h1 className="text-3xl font-bold text-gray-900 mb-8">
-            Admin Panel - Database Testing
+            Admin Panel
           </h1>
+          
+          {/* Tab Navigation */}
+          <div className="border-b border-gray-200 mb-8">
+            <nav className="-mb-px flex space-x-8">
+              <button
+                onClick={() => setActiveTab('review')}
+                className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                  activeTab === 'review'
+                    ? 'border-primary-500 text-primary-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                <Clock className="w-4 h-4 inline mr-2" />
+                Facility Reviews
+              </button>
+              <button
+                onClick={() => setActiveTab('testing')}
+                className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                  activeTab === 'testing'
+                    ? 'border-primary-500 text-primary-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                Database Testing
+              </button>
+            </nav>
+          </div>
+
+          {/* Facility Review Tab */}
+          {activeTab === 'review' && (
+            <div>
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-xl font-semibold text-gray-900">
+                  Pending Facility Reviews
+                </h2>
+                <button
+                  onClick={loadPendingFacilities}
+                  disabled={reviewLoading}
+                  className="btn-secondary"
+                >
+                  {reviewLoading ? 'Loading...' : 'Refresh'}
+                </button>
+              </div>
+
+              {reviewLoading ? (
+                <div className="text-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mx-auto"></div>
+                  <p className="mt-2 text-gray-600">Loading pending facilities...</p>
+                </div>
+              ) : pendingFacilities.length === 0 ? (
+                <div className="text-center py-8">
+                  <Clock className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">No pending reviews</h3>
+                  <p className="text-gray-600">All facilities have been reviewed!</p>
+                </div>
+              ) : (
+                <div className="space-y-6">
+                  {pendingFacilities.map((facility) => (
+                    <div key={facility.id} className="border border-gray-200 rounded-lg p-6">
+                      <div className="flex justify-between items-start mb-4">
+                        <div>
+                          <h3 className="text-lg font-semibold text-gray-900">{facility.name}</h3>
+                          <p className="text-sm text-gray-600">{facility.type}</p>
+                        </div>
+                        <div className="flex space-x-2">
+                          <button
+                            onClick={() => updateFacilityStatus(facility.id, 'active')}
+                            className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+                          >
+                            <CheckCircle className="w-4 h-4 mr-1" />
+                            Approve
+                          </button>
+                          <button
+                            onClick={() => updateFacilityStatus(facility.id, 'rejected')}
+                            className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                          >
+                            <XCircle className="w-4 h-4 mr-1" />
+                            Reject
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <div>
+                          <h4 className="font-medium text-gray-900 mb-2">Facility Details</h4>
+                          <div className="space-y-1 text-sm text-gray-600">
+                            <div className="flex items-center">
+                              <MapPin className="w-4 h-4 mr-2" />
+                              {facility.address}, {facility.city}, {facility.state}
+                            </div>
+                            <div className="flex items-center">
+                              <DollarSign className="w-4 h-4 mr-2" />
+                              ${facility.price}/{facility.price_unit}
+                            </div>
+                            <div className="flex items-center">
+                              <Eye className="w-4 h-4 mr-2" />
+                              Capacity: {facility.capacity} people
+                            </div>
+                          </div>
+                        </div>
+
+                        <div>
+                          <h4 className="font-medium text-gray-900 mb-2">Owner Information</h4>
+                          <div className="space-y-1 text-sm text-gray-600">
+                            <p>
+                              {facility.facility_users?.first_name} {facility.facility_users?.last_name}
+                            </p>
+                            <p>{facility.facility_users?.email}</p>
+                            <p className="text-xs">
+                              Submitted: {new Date(facility.created_at).toLocaleDateString()}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+
+                      {facility.description && (
+                        <div>
+                          <h4 className="font-medium text-gray-900 mb-2">Description</h4>
+                          <p className="text-sm text-gray-600 bg-gray-50 p-3 rounded">
+                            {facility.description}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Database Testing Tab */}
+          {activeTab === 'testing' && (
           
           <div className="space-y-6">
             <div className="border-b pb-6">
@@ -261,6 +474,7 @@ export default function AdminPage() {
               </div>
             </div>
           </div>
+          )}
 
           {message && (
             <div className="mt-8 p-4 bg-gray-100 rounded-md">

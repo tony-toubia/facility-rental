@@ -85,6 +85,225 @@ CREATE TABLE public.conversations (
   CONSTRAINT conversations_pkey PRIMARY KEY (id),
   CONSTRAINT conversations_aura_id_fkey FOREIGN KEY (aura_id) REFERENCES public.auras(id)
 );
+CREATE TABLE public.facility_amenities (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  facility_id uuid NOT NULL,
+  name text NOT NULL,
+  icon_name text,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT facility_amenities_pkey PRIMARY KEY (id),
+  CONSTRAINT facility_amenities_facility_id_fkey FOREIGN KEY (facility_id) REFERENCES public.facility_facilities(id)
+);
+CREATE TABLE public.facility_availability (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  facility_id uuid NOT NULL,
+  day_of_week integer NOT NULL CHECK (day_of_week >= 0 AND day_of_week <= 6),
+  start_time time without time zone NOT NULL,
+  end_time time without time zone NOT NULL,
+  is_available boolean DEFAULT true,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT facility_availability_pkey PRIMARY KEY (id),
+  CONSTRAINT facility_availability_facility_id_fkey FOREIGN KEY (facility_id) REFERENCES public.facility_facilities(id)
+);
+CREATE TABLE public.facility_blocked_dates (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  facility_id uuid NOT NULL,
+  blocked_date date NOT NULL,
+  start_time time without time zone,
+  end_time time without time zone,
+  reason text,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT facility_blocked_dates_pkey PRIMARY KEY (id),
+  CONSTRAINT facility_blocked_dates_facility_id_fkey FOREIGN KEY (facility_id) REFERENCES public.facility_facilities(id)
+);
+CREATE TABLE public.facility_bookings (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  facility_id uuid NOT NULL,
+  user_id uuid NOT NULL,
+  booking_date date NOT NULL,
+  start_time time without time zone NOT NULL,
+  end_time time without time zone NOT NULL,
+  duration_hours numeric NOT NULL,
+  total_price numeric NOT NULL,
+  status USER-DEFINED DEFAULT 'pending'::facility_booking_status,
+  special_requests text,
+  cancellation_reason text,
+  cancelled_at timestamp with time zone,
+  confirmed_at timestamp with time zone,
+  completed_at timestamp with time zone,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT facility_bookings_pkey PRIMARY KEY (id),
+  CONSTRAINT facility_bookings_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.facility_users(id),
+  CONSTRAINT facility_bookings_facility_id_fkey FOREIGN KEY (facility_id) REFERENCES public.facility_facilities(id)
+);
+CREATE TABLE public.facility_categories (
+  id text NOT NULL,
+  name text NOT NULL,
+  description text,
+  icon_name text,
+  color text,
+  is_active boolean DEFAULT true,
+  sort_order integer DEFAULT 0,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT facility_categories_pkey PRIMARY KEY (id)
+);
+CREATE TABLE public.facility_facilities (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  owner_id uuid NOT NULL,
+  category_id text,
+  name text NOT NULL,
+  type text NOT NULL,
+  description text,
+  address text NOT NULL,
+  city text NOT NULL,
+  state text NOT NULL,
+  zip_code text NOT NULL,
+  country text DEFAULT 'US'::text,
+  latitude numeric,
+  longitude numeric,
+  price numeric NOT NULL,
+  price_unit USER-DEFINED NOT NULL DEFAULT 'hour'::facility_price_unit,
+  capacity integer,
+  min_booking_duration integer DEFAULT 1,
+  max_booking_duration integer DEFAULT 8,
+  advance_booking_days integer DEFAULT 30,
+  cancellation_policy text,
+  house_rules text,
+  status USER-DEFINED DEFAULT 'pending_approval'::facility_status,
+  is_featured boolean DEFAULT false,
+  rating numeric DEFAULT 0.0,
+  review_count integer DEFAULT 0,
+  total_bookings integer DEFAULT 0,
+  views_count integer DEFAULT 0,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT facility_facilities_pkey PRIMARY KEY (id),
+  CONSTRAINT facility_facilities_category_id_fkey FOREIGN KEY (category_id) REFERENCES public.facility_categories(id),
+  CONSTRAINT facility_facilities_owner_id_fkey FOREIGN KEY (owner_id) REFERENCES public.facility_users(id)
+);
+CREATE TABLE public.facility_favorites (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  user_id uuid NOT NULL,
+  facility_id uuid NOT NULL,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT facility_favorites_pkey PRIMARY KEY (id),
+  CONSTRAINT facility_favorites_facility_id_fkey FOREIGN KEY (facility_id) REFERENCES public.facility_facilities(id),
+  CONSTRAINT facility_favorites_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.facility_users(id)
+);
+CREATE TABLE public.facility_features (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  facility_id uuid NOT NULL,
+  name text NOT NULL,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT facility_features_pkey PRIMARY KEY (id),
+  CONSTRAINT facility_features_facility_id_fkey FOREIGN KEY (facility_id) REFERENCES public.facility_facilities(id)
+);
+CREATE TABLE public.facility_images (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  facility_id uuid NOT NULL,
+  image_url text NOT NULL,
+  alt_text text,
+  is_primary boolean DEFAULT false,
+  sort_order integer DEFAULT 0,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT facility_images_pkey PRIMARY KEY (id),
+  CONSTRAINT facility_images_facility_id_fkey FOREIGN KEY (facility_id) REFERENCES public.facility_facilities(id)
+);
+CREATE TABLE public.facility_messages (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  sender_id uuid NOT NULL,
+  recipient_id uuid NOT NULL,
+  facility_id uuid,
+  booking_id uuid,
+  subject text,
+  message text NOT NULL,
+  is_read boolean DEFAULT false,
+  read_at timestamp with time zone,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT facility_messages_pkey PRIMARY KEY (id),
+  CONSTRAINT facility_messages_booking_id_fkey FOREIGN KEY (booking_id) REFERENCES public.facility_bookings(id),
+  CONSTRAINT facility_messages_facility_id_fkey FOREIGN KEY (facility_id) REFERENCES public.facility_facilities(id),
+  CONSTRAINT facility_messages_recipient_id_fkey FOREIGN KEY (recipient_id) REFERENCES public.facility_users(id),
+  CONSTRAINT facility_messages_sender_id_fkey FOREIGN KEY (sender_id) REFERENCES public.facility_users(id)
+);
+CREATE TABLE public.facility_notifications (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  user_id uuid NOT NULL,
+  type text NOT NULL,
+  title text NOT NULL,
+  message text NOT NULL,
+  data jsonb,
+  is_read boolean DEFAULT false,
+  read_at timestamp with time zone,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT facility_notifications_pkey PRIMARY KEY (id),
+  CONSTRAINT facility_notifications_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.facility_users(id)
+);
+CREATE TABLE public.facility_reviews (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  facility_id uuid NOT NULL,
+  user_id uuid NOT NULL,
+  booking_id uuid,
+  rating integer NOT NULL CHECK (rating >= 1 AND rating <= 5),
+  comment text,
+  is_verified boolean DEFAULT false,
+  owner_response text,
+  owner_response_date timestamp with time zone,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT facility_reviews_pkey PRIMARY KEY (id),
+  CONSTRAINT facility_reviews_facility_id_fkey FOREIGN KEY (facility_id) REFERENCES public.facility_facilities(id),
+  CONSTRAINT facility_reviews_booking_id_fkey FOREIGN KEY (booking_id) REFERENCES public.facility_bookings(id),
+  CONSTRAINT facility_reviews_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.facility_users(id)
+);
+CREATE TABLE public.facility_transactions (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  booking_id uuid NOT NULL,
+  user_id uuid NOT NULL,
+  facility_owner_id uuid NOT NULL,
+  amount numeric NOT NULL,
+  platform_fee numeric NOT NULL DEFAULT 0,
+  owner_payout numeric NOT NULL,
+  payment_method text,
+  payment_intent_id text,
+  status text NOT NULL DEFAULT 'pending'::text,
+  processed_at timestamp with time zone,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT facility_transactions_pkey PRIMARY KEY (id),
+  CONSTRAINT facility_transactions_booking_id_fkey FOREIGN KEY (booking_id) REFERENCES public.facility_bookings(id),
+  CONSTRAINT facility_transactions_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.facility_users(id),
+  CONSTRAINT facility_transactions_facility_owner_id_fkey FOREIGN KEY (facility_owner_id) REFERENCES public.facility_users(id)
+);
+CREATE TABLE public.facility_users (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  auth_user_id uuid,
+  first_name text NOT NULL,
+  last_name text NOT NULL,
+  email text NOT NULL UNIQUE,
+  phone text,
+  user_type USER-DEFINED NOT NULL DEFAULT 'renter'::facility_user_type,
+  avatar_url text,
+  bio text,
+  date_of_birth date,
+  address text,
+  city text,
+  state text,
+  zip_code text,
+  country text DEFAULT 'US'::text,
+  is_verified boolean DEFAULT false,
+  rating numeric DEFAULT 0.0,
+  total_bookings integer DEFAULT 0,
+  total_listings integer DEFAULT 0,
+  joined_date timestamp with time zone DEFAULT now(),
+  last_active timestamp with time zone DEFAULT now(),
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT facility_users_pkey PRIMARY KEY (id),
+  CONSTRAINT facility_users_auth_user_id_fkey FOREIGN KEY (auth_user_id) REFERENCES auth.users(id)
+);
 CREATE TABLE public.messages (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
   conversation_id uuid,
@@ -197,9 +416,9 @@ CREATE TABLE public.rule_execution_log (
   notification_id uuid,
   execution_time_ms integer,
   CONSTRAINT rule_execution_log_pkey PRIMARY KEY (id),
-  CONSTRAINT rule_execution_log_rule_id_fkey FOREIGN KEY (rule_id) REFERENCES public.behavior_rules(id),
   CONSTRAINT rule_execution_log_notification_id_fkey FOREIGN KEY (notification_id) REFERENCES public.proactive_messages(id),
-  CONSTRAINT rule_execution_log_aura_id_fkey FOREIGN KEY (aura_id) REFERENCES public.auras(id)
+  CONSTRAINT rule_execution_log_aura_id_fkey FOREIGN KEY (aura_id) REFERENCES public.auras(id),
+  CONSTRAINT rule_execution_log_rule_id_fkey FOREIGN KEY (rule_id) REFERENCES public.behavior_rules(id)
 );
 CREATE TABLE public.senses (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
