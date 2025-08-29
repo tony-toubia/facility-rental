@@ -34,12 +34,36 @@ export default function AdminPage() {
     setMessage('')
     
     try {
+      // First try to create a Supabase auth user
+      const email = `test.user.${Date.now()}@example.com`
+      const password = 'testpassword123'
+      
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            first_name: 'Test',
+            last_name: 'User',
+            user_type: 'owner'
+          }
+        }
+      })
+
+      if (authError) {
+        setMessage(`❌ Failed to create auth user: ${authError.message}`)
+        return
+      }
+
+      // If auth user creation succeeded, the facility_user should be created automatically
+      // by our auth context, but let's also try direct insertion for testing
       const { data, error } = await supabase
         .from('facility_users')
         .insert({
+          auth_user_id: authData.user?.id,
           first_name: 'Test',
           last_name: 'User',
-          email: `test.user.${Date.now()}@example.com`,
+          email: email,
           user_type: 'owner',
           city: 'Test City',
           state: 'TS',
@@ -49,9 +73,9 @@ export default function AdminPage() {
         .single()
       
       if (error) {
-        setMessage(`❌ Failed to create user: ${error.message}`)
+        setMessage(`❌ Failed to create facility user: ${error.message}\n\n💡 This might be due to RLS policies. Try running the fix-rls-policies.sql script in your Supabase SQL editor.`)
       } else {
-        setMessage(`✅ Created test user: ${data.first_name} ${data.last_name} (${data.email})`)
+        setMessage(`✅ Created test user: ${data.first_name} ${data.last_name} (${data.email})\n✅ Auth user ID: ${authData.user?.id}`)
       }
     } catch (err) {
       setMessage(`❌ Error: ${err}`)
@@ -208,16 +232,32 @@ export default function AdminPage() {
             </div>
 
             <div>
-              <h2 className="text-xl font-semibold mb-4">Environment Setup</h2>
-              <div className="bg-yellow-50 border border-yellow-200 rounded-md p-4">
-                <h3 className="font-medium text-yellow-800 mb-2">Required Environment Variables:</h3>
-                <ul className="text-sm text-yellow-700 space-y-1">
-                  <li>• NEXT_PUBLIC_SUPABASE_URL</li>
-                  <li>• NEXT_PUBLIC_SUPABASE_ANON_KEY</li>
-                </ul>
-                <p className="text-sm text-yellow-700 mt-2">
-                  Make sure these are set in your .env.local file with your actual Supabase project values.
-                </p>
+              <h2 className="text-xl font-semibold mb-4">Setup Instructions</h2>
+              <div className="space-y-4">
+                <div className="bg-yellow-50 border border-yellow-200 rounded-md p-4">
+                  <h3 className="font-medium text-yellow-800 mb-2">Required Environment Variables:</h3>
+                  <ul className="text-sm text-yellow-700 space-y-1">
+                    <li>• NEXT_PUBLIC_SUPABASE_URL</li>
+                    <li>• NEXT_PUBLIC_SUPABASE_ANON_KEY</li>
+                  </ul>
+                  <p className="text-sm text-yellow-700 mt-2">
+                    Make sure these are set in your .env.local file with your actual Supabase project values.
+                  </p>
+                </div>
+                
+                <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
+                  <h3 className="font-medium text-blue-800 mb-2">Fix RLS Policies (if getting permission errors):</h3>
+                  <p className="text-sm text-blue-700 mb-2">
+                    If you're getting "row-level security policy" errors, run the fix-rls-policies.sql script:
+                  </p>
+                  <ol className="text-sm text-blue-700 space-y-1 list-decimal list-inside">
+                    <li>Go to your Supabase dashboard</li>
+                    <li>Open the SQL Editor</li>
+                    <li>Copy and paste the contents of <code className="bg-blue-100 px-1 rounded">fix-rls-policies.sql</code></li>
+                    <li>Run the SQL script</li>
+                    <li>Try creating sample data again</li>
+                  </ol>
+                </div>
               </div>
             </div>
           </div>

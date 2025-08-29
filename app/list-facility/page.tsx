@@ -1,9 +1,15 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { Upload, MapPin, DollarSign, Clock, Plus, X } from 'lucide-react'
+import { useAuth } from '@/lib/auth'
+import { createFacility, uploadFacilityImage, createFacilityAmenities, createFacilityFeatures } from '@/lib/database'
 
 export default function ListFacilityPage() {
+  const router = useRouter()
+  const { user } = useAuth()
+  
   const [formData, setFormData] = useState({
     name: '',
     type: '',
@@ -13,7 +19,7 @@ export default function ListFacilityPage() {
     state: '',
     zipCode: '',
     price: '',
-    priceUnit: 'hour',
+    priceUnit: 'hour' as 'hour' | 'day' | 'session',
     capacity: '',
     amenities: [] as string[],
     features: [] as string[],
@@ -22,6 +28,8 @@ export default function ListFacilityPage() {
 
   const [newAmenity, setNewAmenity] = useState('')
   const [newFeature, setNewFeature] = useState('')
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState('')
 
   const facilityTypes = [
     'Gym & Fitness',
@@ -108,11 +116,75 @@ export default function ListFacilityPage() {
     }))
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    // Handle form submission here
-    console.log('Form submitted:', formData)
-    alert('Facility listing submitted for review!')
+    setError('')
+    
+    // Check if user is authenticated
+    if (!user) {
+      setError('You must be logged in to list a facility. Please sign in first.')
+      return
+    }
+
+    setIsLoading(true)
+    
+    try {
+      // Create the facility record
+      const facilityData = {
+        name: formData.name,
+        type: formData.type,
+        description: formData.description,
+        address: formData.address,
+        city: formData.city,
+        state: formData.state,
+        zip_code: formData.zipCode,
+        country: 'US', // Default to US for now
+        price: parseFloat(formData.price),
+        price_unit: formData.priceUnit,
+        capacity: formData.capacity ? parseInt(formData.capacity) : null,
+        status: 'pending_approval' as const
+      }
+
+      const facility = await createFacility(facilityData)
+      
+      if (!facility) {
+        throw new Error('Failed to create facility')
+      }
+
+      // Upload images if any
+      if (formData.images.length > 0) {
+        const imageUploadPromises = formData.images.map(async (file, index) => {
+          try {
+            const imageUrl = await uploadFacilityImage(facility.id, file)
+            // You could also create facility_images records here if needed
+            return imageUrl
+          } catch (error) {
+            console.error(`Failed to upload image ${index + 1}:`, error)
+            return null
+          }
+        })
+        
+        await Promise.all(imageUploadPromises)
+      }
+
+      // Create amenities and features records
+      if (formData.amenities.length > 0) {
+        await createFacilityAmenities(facility.id, formData.amenities)
+      }
+      
+      if (formData.features.length > 0) {
+        await createFacilityFeatures(facility.id, formData.features)
+      }
+      
+      alert('Facility listing submitted successfully! It will be reviewed before going live.')
+      router.push('/') // Redirect to home page
+      
+    } catch (err: any) {
+      console.error('Error creating facility:', err)
+      setError(err.message || 'Failed to create facility listing. Please try again.')
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
@@ -125,6 +197,20 @@ export default function ListFacilityPage() {
               Share your space with the community and start earning. Fill out the details below to get started.
             </p>
           </div>
+
+          {error && (
+            <div className="mx-6 mt-6 p-4 bg-red-50 border border-red-200 rounded-md">
+              <p className="text-sm text-red-600">{error}</p>
+            </div>
+          )}
+          
+          {!user && (
+            <div className="mx-6 mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-md">
+              <p className="text-sm text-yellow-700">
+                You must be <a href="/login" className="text-yellow-800 underline">logged in</a> to list a facility.
+              </p>
+            </div>
+          )}
 
           <form onSubmit={handleSubmit} className="px-6 py-8 space-y-8">
             {/* Basic Information */}
@@ -480,13 +566,26 @@ export default function ListFacilityPage() {
             {/* Submit Button */}
             <div className="border-t pt-8">
               <div className="flex justify-end space-x-4">
-                <button type="button" className="btn-secondary px-8 py-3">
+                <button 
+                  type="button" 
+                  className="btn-secondary px-8 py-3"
+                  disabled={isLoading}
+                >
                   Save as Draft
                 </button>
-                <button type="submit" className="btn-primary px-8 py-3">
-                  Submit for Review
+                <button 
+                  type="submit" 
+                  className="btn-primary px-8 py-3 disabled:opacity-50 disabled:cursor-not-allowed"
+                  disabled={isLoading || !user}
+                >
+                  {isLoading ? 'Submitting...' : 'Submit for Review'}
                 </button>
               </div>
+              {!user && (
+                <p className="text-sm text-gray-500 text-right mt-2">
+                  Please log in to submit your facility listing
+                </p>
+              )}
             </div>
           </form>
         </div>

@@ -535,3 +535,87 @@ function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: numbe
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
   return R * c
 }
+
+// File Upload Functions
+export async function uploadFacilityImage(facilityId: string, file: File): Promise<string | null> {
+  try {
+    // Generate a unique filename
+    const fileExt = file.name.split('.').pop()
+    const fileName = `${facilityId}/${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`
+    
+    // Upload to Supabase Storage
+    const { data, error } = await supabase.storage
+      .from('facility-images')
+      .upload(fileName, file, {
+        cacheControl: '3600',
+        upsert: false
+      })
+
+    if (error) {
+      console.error('Error uploading image:', error)
+      return null
+    }
+
+    // Get the public URL
+    const { data: { publicUrl } } = supabase.storage
+      .from('facility-images')
+      .getPublicUrl(fileName)
+
+    // Create a facility_images record
+    const { error: dbError } = await supabase
+      .from('facility_images')
+      .insert({
+        facility_id: facilityId,
+        image_url: publicUrl,
+        alt_text: `${file.name}`,
+        is_primary: false, // You might want to set the first image as primary
+        sort_order: 0
+      })
+
+    if (dbError) {
+      console.error('Error creating image record:', dbError)
+      // Still return the URL even if DB record creation fails
+    }
+
+    return publicUrl
+  } catch (error) {
+    console.error('Error in uploadFacilityImage:', error)
+    return null
+  }
+}
+
+// Create facility amenities and features
+export async function createFacilityAmenities(facilityId: string, amenities: string[]): Promise<void> {
+  if (amenities.length === 0) return
+
+  const amenityRecords = amenities.map(name => ({
+    facility_id: facilityId,
+    name,
+    icon_name: null // You could map amenity names to icon names here
+  }))
+
+  const { error } = await supabase
+    .from('facility_amenities')
+    .insert(amenityRecords)
+
+  if (error) {
+    console.error('Error creating facility amenities:', error)
+  }
+}
+
+export async function createFacilityFeatures(facilityId: string, features: string[]): Promise<void> {
+  if (features.length === 0) return
+
+  const featureRecords = features.map(name => ({
+    facility_id: facilityId,
+    name
+  }))
+
+  const { error } = await supabase
+    .from('facility_features')
+    .insert(featureRecords)
+
+  if (error) {
+    console.error('Error creating facility features:', error)
+  }
+}

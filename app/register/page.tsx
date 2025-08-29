@@ -1,10 +1,15 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Mail, Lock, User, Eye, EyeOff, Phone } from 'lucide-react'
+import { useAuth } from '@/lib/auth'
 
 export default function RegisterPage() {
+  const router = useRouter()
+  const { signUp } = useAuth()
+  
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -12,12 +17,13 @@ export default function RegisterPage() {
     phone: '',
     password: '',
     confirmPassword: '',
-    userType: 'renter',
+    userType: 'renter' as 'renter' | 'owner',
     agreeToTerms: false
   })
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState('')
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target
@@ -29,25 +35,44 @@ export default function RegisterPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    setError('')
     
     if (formData.password !== formData.confirmPassword) {
-      alert('Passwords do not match')
+      setError('Passwords do not match')
       return
     }
 
     if (!formData.agreeToTerms) {
-      alert('Please agree to the terms and conditions')
+      setError('Please agree to the terms and conditions')
+      return
+    }
+
+    if (formData.password.length < 6) {
+      setError('Password must be at least 6 characters long')
       return
     }
 
     setIsLoading(true)
     
-    // Simulate API call
-    setTimeout(() => {
-      console.log('Registration attempt:', formData)
-      alert('Registration functionality would be implemented here')
+    try {
+      const { error } = await signUp(formData.email, formData.password, {
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        userType: formData.userType
+      })
+
+      if (error) {
+        setError(error.message)
+      } else {
+        // Registration successful
+        alert('Registration successful! Please check your email to verify your account.')
+        router.push('/login')
+      }
+    } catch (err) {
+      setError('An unexpected error occurred. Please try again.')
+    } finally {
       setIsLoading(false)
-    }, 1000)
+    }
   }
 
   return (
@@ -66,6 +91,12 @@ export default function RegisterPage() {
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
         <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
+          {error && (
+            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md">
+              <p className="text-sm text-red-600">{error}</p>
+            </div>
+          )}
+          
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* User Type Selection */}
             <div>
