@@ -6,7 +6,8 @@ import Link from 'next/link'
 import { Search, Filter, MapPin, Star, DollarSign, Grid, List, Navigation } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/lib/auth'
-import { getUserLocation, formatLocationDisplay, getLocationSourceDescription, UserLocation } from '@/lib/location'
+import { getFacilitiesWithinRadius, getBrowserLocation, geocodeAddress, LocationData } from '@/lib/geolocation'
+import LocationAutocomplete from '@/components/LocationAutocomplete'
 
 interface Facility {
   id: string
@@ -16,6 +17,8 @@ interface Facility {
   address: string
   city: string
   state: string
+  latitude?: number
+  longitude?: number
   price: number
   price_unit: string
   capacity: number
@@ -24,6 +27,7 @@ interface Facility {
   status: string
   created_at: string
   owner_id: string
+  distance?: number // Distance in miles from search location
   facility_users?: {
     first_name: string
     last_name: string
@@ -51,36 +55,41 @@ const sortOptions = ['Relevance', 'Price: Low to High', 'Price: High to Low', 'R
 export default function BrowsePage() {
   const { facilityUser } = useAuth()
   const [searchQuery, setSearchQuery] = useState('')
-  const [locationQuery, setLocationQuery] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('All')
   const [selectedPriceRange, setSelectedPriceRange] = useState('All')
-  const [sortBy, setSortBy] = useState('Relevance')
+  const [sortBy, setSortBy] = useState('Distance')
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
   const [showFilters, setShowFilters] = useState(false)
   const [facilities, setFacilities] = useState<Facility[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [userLocation, setUserLocation] = useState<UserLocation | null>(null)
-  const [locationLoading, setLocationLoading] = useState(true)
+  const [userLocation, setUserLocation] = useState<LocationData | null>(null)
+  const [locationLoading, setLocationLoading] = useState(false)
+  const [radiusMiles, setRadiusMiles] = useState(25)
 
-  const loadUserLocation = useCallback(async () => {
+  const handleLocationSelect = useCallback((location: LocationData) => {
+    console.log('Location selected:', location)
+    setUserLocation(location)
+    setLocationLoading(false)
+  }, [])
+
+  const handleLocationClear = useCallback(() => {
+    setUserLocation(null)
+  }, [])
+
+  const loadUserLocationFromBrowser = useCallback(async () => {
     try {
       setLocationLoading(true)
-      
-      const profileLocation = facilityUser ? {
-        city: facilityUser.city || undefined,
-        state: facilityUser.state || undefined,
-        zip_code: facilityUser.zip_code || undefined
-      } : undefined
-      
-      const location = await getUserLocation(profileLocation, locationQuery)
-      setUserLocation(location)
+      const location = await getBrowserLocation()
+      if (location) {
+        setUserLocation(location)
+      }
     } catch (error) {
-      console.error('Error loading user location:', error)
+      console.error('Error loading browser location:', error)
     } finally {
       setLocationLoading(false)
     }
-  }, [facilityUser, locationQuery])
+  }, [])
 
   const loadFacilities = useCallback(async () => {
     try {
@@ -89,78 +98,62 @@ export default function BrowsePage() {
       
       console.log('Loading facilities with user location:', userLocation)
       
-      let query = supabase
-        .from('facility_facilities')
-        .select(`
-          *,
-          facility_users:owner_id (
-            first_name,
-            last_name,
-            email
-          ),
-          facility_images (
-            image_url,
-            is_primary
-          ),
-          facility_amenities (
-            name,
-            icon_name
-          ),
-          facility_features (
-            name
-          )
-        `)
-        .eq('status', 'active')
-
-      // Apply location-based filtering if we have user location
-      if (userLocation?.data) {
-        const { city, state, latitude, longitude } = userLocation.data
+      if (userLocation && userLocation.latitude && userLocation.longitude) {
+        // Use PostGIS-powered radius search
+        console.log('Using PostGIS radius search:', {
+          lat: userLocation.latitude,
+          lng: userLocation.longitude,
+          radius: radiusMiles
+        })
         
-        if (latitude && longitude) {
-          // Use radius-based filtering with coordinates (within ~25 miles)
-          const radiusInDegrees = 0.36 // Approximately 25 miles
-          console.log('Applying coordinate-based filtering:', {
-            userLat: latitude,
-            userLng: longitude,
-            radius: radiusInDegrees
-          })
-          query = query
-            .gte('latitude', latitude - radiusInDegrees)
-            .lte('latitude', latitude + radiusInDegrees)
-            .gte('longitude', longitude - radiusInDegrees)
-            .lte('longitude', longitude + radiusInDegrees)
-        } else if (city && state) {
-          // Filter by exact state and city (case-insensitive)
-          console.log('Applying city/state-based filtering:', { city, state })
-          query = query
-            .eq('state', state)
-            .ilike('city', `%${city}%`)
-        } else if (state) {
-          // Fallback to state-based filtering only
-          console.log('Applying state-only filtering:', state)
-          query = query.eq('state', state)
+        const { data, error } = await getFacilitiesWithinRadius(
+          userLocation.latitude,
+          userLocation.longitude,
+          radiusMiles
+        )
+        
+        if (error) {
+          console.error('Error loading facilities with radius:', error)
+          setError(`Failed to load facilities: ${error.message}`)
         } else {
-          console.log('Location data incomplete - showing all facilities')
+          console.log('Loaded facilities with distance:', data?.length)
+          setFacilities(data || [])
         }
       } else {
-        console.log('No location data available - showing all facilities')
-      }
+        // Fallback to loading all facilities
+        console.log('No location available - loading all facilities')
+        
+        const { data, error } = await supabase
+          .from('facility_facilities')
+          .select(`
+            *,
+            facility_users:owner_id (
+              first_name,
+              last_name,
+              email
+            ),
+            facility_images (
+              image_url,
+              is_primary
+            ),
+            facility_amenities (
+              name,
+              icon_name
+            ),
+            facility_features (
+              name
+            )
+          `)
+          .eq('status', 'active')
+          .order('created_at', { ascending: false })
 
-      const { data, error } = await query.order('created_at', { ascending: false })
-
-      if (error) {
-        console.error('Error loading facilities:', error)
-        setError(`Failed to load facilities: ${error.message}`)
-      } else {
-        console.log('Loaded facilities count:', data?.length)
-        console.log('Sample facility locations:', data?.slice(0, 3).map(f => ({
-          name: f.name,
-          city: f.city,
-          state: f.state,
-          lat: f.latitude,
-          lng: f.longitude
-        })))
-        setFacilities(data || [])
+        if (error) {
+          console.error('Error loading all facilities:', error)
+          setError(`Failed to load facilities: ${error.message}`)
+        } else {
+          console.log('Loaded all facilities:', data?.length)
+          setFacilities(data || [])
+        }
       }
     } catch (err) {
       console.error('Error:', err)
@@ -168,17 +161,19 @@ export default function BrowsePage() {
     } finally {
       setLoading(false)
     }
-  }, [userLocation])
+  }, [userLocation, radiusMiles])
 
-  // Load user location on component mount
-  useEffect(() => {
-    loadUserLocation()
-  }, [loadUserLocation])
-
-  // Fetch facilities from database
+  // Load facilities when component mounts or location changes
   useEffect(() => {
     loadFacilities()
   }, [loadFacilities])
+
+  // Try to load user location from browser on mount
+  useEffect(() => {
+    if (!userLocation) {
+      loadUserLocationFromBrowser()
+    }
+  }, [])
 
   const filteredFacilities = facilities.filter(facility => {
     const matchesSearch = facility.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -193,13 +188,18 @@ export default function BrowsePage() {
     return matchesSearch && matchesCategory && matchesPriceRange
   })
 
-  const handleLocationSearch = async () => {
-    await loadUserLocation()
-  }
-
   const handleShowAll = () => {
     setUserLocation(null)
-    setLocationQuery('')
+  }
+
+  const formatLocationDisplay = (location: LocationData) => {
+    if (location.city && location.state) {
+      return `${location.city}, ${location.state}`
+    } else if (location.state) {
+      return location.state
+    } else {
+      return location.address
+    }
   }
 
   return (
@@ -215,18 +215,28 @@ export default function BrowsePage() {
               <div className="flex items-center text-sm text-gray-600">
                 <Navigation className="w-4 h-4 mr-2" />
                 <span>
-                  Showing facilities near <strong>{formatLocationDisplay(userLocation)}</strong>
-                  <span className="ml-1 text-gray-500">
-                    ({getLocationSourceDescription(userLocation.source)})
-                  </span>
+                  Showing facilities within <strong>{radiusMiles} miles</strong> of <strong>{formatLocationDisplay(userLocation)}</strong>
                 </span>
               </div>
-              <button
-                onClick={handleShowAll}
-                className="text-sm text-primary-600 hover:text-primary-500 font-medium"
-              >
-                Show All Facilities
-              </button>
+              <div className="flex items-center gap-3">
+                <select
+                  value={radiusMiles}
+                  onChange={(e) => setRadiusMiles(Number(e.target.value))}
+                  className="text-sm border border-gray-300 rounded px-2 py-1"
+                >
+                  <option value={5}>5 miles</option>
+                  <option value={10}>10 miles</option>
+                  <option value={25}>25 miles</option>
+                  <option value={50}>50 miles</option>
+                  <option value={100}>100 miles</option>
+                </select>
+                <button
+                  onClick={handleShowAll}
+                  className="text-sm text-primary-600 hover:text-primary-500 font-medium"
+                >
+                  Show All Facilities
+                </button>
+              </div>
             </div>
           )}
           
@@ -243,25 +253,15 @@ export default function BrowsePage() {
                   className="input-field pl-10"
                 />
               </div>
-              <div className="flex-1 flex gap-2">
-                <div className="flex-1 relative">
-                  <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                  <input
-                    type="text"
-                    value={locationQuery}
-                    onChange={(e) => setLocationQuery(e.target.value)}
-                    onKeyPress={(e) => e.key === 'Enter' && handleLocationSearch()}
-                    placeholder="City, State or Zip Code"
-                    className="input-field pl-10"
-                  />
-                </div>
-                <button
-                  onClick={handleLocationSearch}
-                  className="btn-primary px-4"
-                  disabled={locationLoading}
-                >
-                  {locationLoading ? 'Searching...' : 'Search'}
-                </button>
+              <div className="flex-1">
+                <LocationAutocomplete
+                  onLocationSelect={handleLocationSelect}
+                  onClear={handleLocationClear}
+                  placeholder="Search for a location..."
+                  value={userLocation ? formatLocationDisplay(userLocation) : ''}
+                  showClearButton={!!userLocation}
+                  className="w-full"
+                />
               </div>
             </div>
             <button
@@ -441,9 +441,16 @@ export default function BrowsePage() {
                           {facility.name}
                         </h3>
 
-                        <div className="flex items-center text-gray-600 text-sm mb-3">
-                          <MapPin className="w-4 h-4 mr-1" />
-                          {location}
+                        <div className="flex items-center justify-between text-gray-600 text-sm mb-3">
+                          <div className="flex items-center">
+                            <MapPin className="w-4 h-4 mr-1" />
+                            {location}
+                          </div>
+                          {facility.distance && (
+                            <span className="text-primary-600 font-medium">
+                              {facility.distance} mi
+                            </span>
+                          )}
                         </div>
 
                         {allFeatures.length > 0 && (
