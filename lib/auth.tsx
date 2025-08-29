@@ -71,7 +71,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             first_name: userData.first_name || userData.firstName || 'User',
             last_name: userData.last_name || userData.lastName || '',
             email: authUser.user.email || '',
-            user_type: userData.user_type || userData.userType || 'renter'
+            user_type: userData.user_type || userData.userType || 'renter',
+            city: userData.city || '',
+            state: userData.state || '',
+            zip_code: userData.zip_code || ''
           }
           
           facilityUser = await createFacilityUser(newUserData)
@@ -102,6 +105,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       firstName: string
       lastName: string
       userType?: 'renter' | 'owner'
+      city?: string
+      state?: string
+      zipCode?: string
     }
   ) => {
     const { error } = await supabase.auth.signUp({
@@ -111,7 +117,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         data: {
           first_name: userData.firstName,
           last_name: userData.lastName,
-          user_type: userData.userType || 'renter'
+          user_type: userData.userType || 'renter',
+          city: userData.city || '',
+          state: userData.state || '',
+          zip_code: userData.zipCode || ''
         }
       }
     })

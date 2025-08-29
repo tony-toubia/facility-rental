@@ -235,14 +235,16 @@ export default function FacilityDetailPage({ params }: { params: { id: string } 
               <div className="flex items-center justify-between mb-4">
                 <span className="text-sm text-primary-600 font-medium">{facility.type}</span>
                 <div className="flex items-center space-x-1">
-                  <Star className={`w-5 h-5 ${facility.rating ? 'text-yellow-400 fill-current' : 'text-gray-300'}`} />
-                  {facility.rating && (
+                  {facility.rating ? (
                     <>
+                      <Star className="w-5 h-5 text-yellow-400 fill-current" />
                       <span className="font-medium">{facility.rating}</span>
                       {facility.review_count && facility.review_count > 0 && (
                         <span className="text-gray-500">({facility.review_count} reviews)</span>
                       )}
                     </>
+                  ) : (
+                    <span className="text-gray-500">-</span>
                   )}
                 </div>
               </div>

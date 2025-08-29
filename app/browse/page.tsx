@@ -3,8 +3,10 @@
 import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { Search, Filter, MapPin, Star, DollarSign, Grid, List } from 'lucide-react'
+import { Search, Filter, MapPin, Star, DollarSign, Grid, List, Navigation } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
+import { useAuth } from '@/lib/auth'
+import { getUserLocation, formatLocationDisplay, getLocationSourceDescription, UserLocation } from '@/lib/location'
 
 interface Facility {
   id: string
@@ -47,7 +49,9 @@ const priceRanges = ['All', '$0-25', '$26-50', '$51-75', '$76+']
 const sortOptions = ['Relevance', 'Price: Low to High', 'Price: High to Low', 'Rating', 'Distance']
 
 export default function BrowsePage() {
+  const { facilityUser } = useAuth()
   const [searchQuery, setSearchQuery] = useState('')
+  const [locationQuery, setLocationQuery] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('All')
   const [selectedPriceRange, setSelectedPriceRange] = useState('All')
   const [sortBy, setSortBy] = useState('Relevance')
@@ -56,18 +60,44 @@ export default function BrowsePage() {
   const [facilities, setFacilities] = useState<Facility[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [userLocation, setUserLocation] = useState<UserLocation | null>(null)
+  const [locationLoading, setLocationLoading] = useState(true)
+
+  // Load user location on component mount
+  useEffect(() => {
+    loadUserLocation()
+  }, [facilityUser])
 
   // Fetch facilities from database
   useEffect(() => {
     loadFacilities()
-  }, [])
+  }, [userLocation])
+
+  const loadUserLocation = async () => {
+    try {
+      setLocationLoading(true)
+      
+      const profileLocation = facilityUser ? {
+        city: facilityUser.city,
+        state: facilityUser.state,
+        zip_code: facilityUser.zip_code
+      } : undefined
+      
+      const location = await getUserLocation(profileLocation, locationQuery)
+      setUserLocation(location)
+    } catch (error) {
+      console.error('Error loading user location:', error)
+    } finally {
+      setLocationLoading(false)
+    }
+  }
 
   const loadFacilities = async () => {
     try {
       setLoading(true)
       setError(null)
       
-      const { data, error } = await supabase
+      let query = supabase
         .from('facility_facilities')
         .select(`
           *,
@@ -89,7 +119,15 @@ export default function BrowsePage() {
           )
         `)
         .eq('status', 'active')
-        .order('created_at', { ascending: false })
+
+      // Apply location-based filtering if we have user location
+      if (userLocation?.data.city && userLocation?.data.state) {
+        // For now, filter by exact city/state match
+        // TODO: Implement radius-based filtering with coordinates
+        query = query.or(`city.ilike.%${userLocation.data.city}%,state.ilike.%${userLocation.data.state}%`)
+      }
+
+      const { data, error } = await query.order('created_at', { ascending: false })
 
       if (error) {
         console.error('Error loading facilities:', error)
@@ -119,6 +157,10 @@ export default function BrowsePage() {
     return matchesSearch && matchesCategory && matchesPriceRange
   })
 
+  const handleLocationSearch = async () => {
+    await loadUserLocation()
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -126,17 +168,43 @@ export default function BrowsePage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <h1 className="text-3xl font-bold text-gray-900 mb-4">Browse Facilities</h1>
           
+          {/* Location Display */}
+          {userLocation && (
+            <div className="mb-4 flex items-center text-sm text-gray-600">
+              <Navigation className="w-4 h-4 mr-2" />
+              <span>
+                Showing facilities near <strong>{formatLocationDisplay(userLocation)}</strong>
+                <span className="ml-1 text-gray-500">
+                  ({getLocationSourceDescription(userLocation.source)})
+                </span>
+              </span>
+            </div>
+          )}
+          
           {/* Search Bar */}
-          <div className="flex flex-col md:flex-row gap-4">
-            <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search facilities..."
-                className="input-field pl-10"
-              />
+          <div className="flex flex-col lg:flex-row gap-4">
+            <div className="flex flex-col md:flex-row gap-4 flex-1">
+              <div className="flex-1 relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search facilities..."
+                  className="input-field pl-10"
+                />
+              </div>
+              <div className="flex-1 relative">
+                <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                <input
+                  type="text"
+                  value={locationQuery}
+                  onChange={(e) => setLocationQuery(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && handleLocationSearch()}
+                  placeholder="City, State or Zip Code"
+                  className="input-field pl-10"
+                />
+              </div>
             </div>
             <button
               onClick={() => setShowFilters(!showFilters)}
@@ -297,14 +365,16 @@ export default function BrowsePage() {
                         <div className="flex items-center justify-between mb-2">
                           <span className="text-sm text-primary-600 font-medium">{facility.type}</span>
                           <div className="flex items-center space-x-1">
-                            <Star className={`w-4 h-4 ${facility.rating ? 'text-yellow-400 fill-current' : 'text-gray-300'}`} />
-                            {facility.rating && (
+                            {facility.rating ? (
                               <>
+                                <Star className="w-4 h-4 text-yellow-400 fill-current" />
                                 <span className="text-sm font-medium">{facility.rating}</span>
                                 {facility.review_count && facility.review_count > 0 && (
                                   <span className="text-sm text-gray-500">({facility.review_count})</span>
                                 )}
                               </>
+                            ) : (
+                              <span className="text-sm text-gray-500">-</span>
                             )}
                           </div>
                         </div>

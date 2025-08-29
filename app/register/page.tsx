@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Mail, Lock, User, Eye, EyeOff, Phone } from 'lucide-react'
+import { Mail, Lock, User, Eye, EyeOff, Phone, MapPin } from 'lucide-react'
 import { useAuth } from '@/lib/auth'
 
 export default function RegisterPage() {
@@ -15,6 +15,9 @@ export default function RegisterPage() {
     lastName: '',
     email: '',
     phone: '',
+    city: '',
+    state: '',
+    zipCode: '',
     password: '',
     confirmPassword: '',
     userType: 'renter' as 'renter' | 'owner',
@@ -58,7 +61,10 @@ export default function RegisterPage() {
       const { error } = await signUp(formData.email, formData.password, {
         firstName: formData.firstName,
         lastName: formData.lastName,
-        userType: formData.userType
+        userType: formData.userType,
+        city: formData.city,
+        state: formData.state,
+        zipCode: formData.zipCode
       })
 
       if (error) {
@@ -207,6 +213,62 @@ export default function RegisterPage() {
                   className="input-field pl-10"
                   placeholder="(555) 123-4567"
                 />
+              </div>
+            </div>
+
+            {/* Location Fields */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-3">
+                Location (Optional)
+              </label>
+              <p className="text-xs text-gray-500 mb-3">
+                Help us show you facilities in your area. You can always change this later.
+              </p>
+              
+              <div className="space-y-3">
+                {/* City */}
+                <div>
+                  <div className="relative">
+                    <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                    <input
+                      id="city"
+                      name="city"
+                      type="text"
+                      value={formData.city}
+                      onChange={handleInputChange}
+                      className="input-field pl-10"
+                      placeholder="City"
+                    />
+                  </div>
+                </div>
+
+                {/* State and Zip Code */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <input
+                      id="state"
+                      name="state"
+                      type="text"
+                      value={formData.state}
+                      onChange={handleInputChange}
+                      className="input-field"
+                      placeholder="State"
+                      maxLength={2}
+                    />
+                  </div>
+                  <div>
+                    <input
+                      id="zipCode"
+                      name="zipCode"
+                      type="text"
+                      value={formData.zipCode}
+                      onChange={handleInputChange}
+                      className="input-field"
+                      placeholder="Zip Code"
+                      maxLength={10}
+                    />
+                  </div>
+                </div>
               </div>
             </div>
 
