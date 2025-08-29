@@ -8,7 +8,7 @@ import { createFacility, uploadFacilityImage, createFacilityAmenities, createFac
 
 export default function ListFacilityPage() {
   const router = useRouter()
-  const { user } = useAuth()
+  const { user, facilityUser } = useAuth()
   
   const [formData, setFormData] = useState({
     name: '',
@@ -131,6 +131,7 @@ export default function ListFacilityPage() {
     try {
       // Create the facility record
       const facilityData = {
+        owner_id: facilityUser?.id || user?.id || '', // Use facilityUser.id as owner_id
         name: formData.name,
         type: formData.type,
         description: formData.description,
@@ -576,12 +577,12 @@ export default function ListFacilityPage() {
                 <button 
                   type="submit" 
                   className="btn-primary px-8 py-3 disabled:opacity-50 disabled:cursor-not-allowed"
-                  disabled={isLoading || !user}
+                  disabled={isLoading || !user || !facilityUser}
                 >
                   {isLoading ? 'Submitting...' : 'Submit for Review'}
                 </button>
               </div>
-              {!user && (
+              {(!user || !facilityUser) && (
                 <p className="text-sm text-gray-500 text-right mt-2">
                   Please log in to submit your facility listing
                 </p>
