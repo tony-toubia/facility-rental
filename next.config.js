@@ -14,9 +14,31 @@ const nextConfig = {
         port: '',
         pathname: '/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'ahzmfkjtiiyuipweaktx.supabase.co',
+        port: '',
+        pathname: '/storage/v1/object/public/**',
+      },
+      {
+        protocol: 'https',
+        hostname: '**.supabase.co',
+        port: '',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: '**.supabase.com',
+        port: '',
+        pathname: '/**',
+      },
     ],
     // Keep domains for backward compatibility
-    domains: ['images.unsplash.com', 'via.placeholder.com'],
+    domains: [
+      'images.unsplash.com', 
+      'via.placeholder.com',
+      'ahzmfkjtiiyuipweaktx.supabase.co'
+    ],
   },
 }
 

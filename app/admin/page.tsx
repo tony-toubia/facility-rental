@@ -68,6 +68,7 @@ export default function AdminPage() {
         console.error('Error loading pending facilities:', error)
         setMessage(`❌ Error loading facilities: ${error.message}`)
       } else {
+        console.log('Loaded facilities:', data)
         setPendingFacilities(data || [])
       }
     } catch (err) {
@@ -329,21 +330,39 @@ export default function AdminPage() {
                     const primaryImage = facility.facility_images?.find(img => img.is_primary)?.image_url || 
                                        facility.facility_images?.[0]?.image_url
                     
+                    console.log('Facility:', facility.name, 'Images:', facility.facility_images, 'Primary Image:', primaryImage)
+                    
                     return (
                     <div key={facility.id} className="border border-gray-200 rounded-lg p-6">
                       <div className="flex justify-between items-start mb-4">
                         <div className="flex space-x-4">
-                          {primaryImage && (
-                            <div className="relative w-24 h-24 rounded-lg overflow-hidden flex-shrink-0">
+                          <div className="relative w-24 h-24 rounded-lg overflow-hidden flex-shrink-0 bg-gray-100 flex items-center justify-center">
+                            {primaryImage ? (
                               <Image
                                 src={primaryImage}
                                 alt={facility.name}
                                 fill
                                 className="object-cover"
                                 sizes="96px"
+                                onError={(e) => {
+                                  console.error('Image failed to load:', primaryImage)
+                                  console.error('Error details:', e)
+                                  // Hide the broken image and show fallback
+                                  const parent = e.currentTarget.parentElement
+                                  if (parent) {
+                                    parent.innerHTML = '<div class="text-gray-400 text-xs text-center">Image Failed</div>'
+                                  }
+                                }}
+                                onLoad={() => {
+                                  console.log('Image loaded successfully:', primaryImage)
+                                }}
                               />
-                            </div>
-                          )}
+                            ) : (
+                              <div className="text-gray-400 text-xs text-center">
+                                No Image
+                              </div>
+                            )}
+                          </div>
                           <div>
                             <h3 className="text-lg font-semibold text-gray-900">{facility.name}</h3>
                             <p className="text-sm text-gray-600">{facility.type}</p>
