@@ -56,13 +56,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const loadFacilityUser = async (authUserId: string) => {
     try {
+      console.log('Loading facility user for auth ID:', authUserId)
       let facilityUser = await getFacilityUserByAuthId(authUserId)
+      console.log('Found existing facility user:', facilityUser)
       
       // If no facility user exists, create one from auth user data
       if (!facilityUser) {
+        console.log('No facility user found, creating new one...')
         const { data: authUser } = await supabase.auth.getUser()
         if (authUser.user) {
           const userData = authUser.user.user_metadata || {}
+          console.log('Auth user metadata:', userData)
           facilityUser = await createFacilityUser({
             auth_user_id: authUserId,
             first_name: userData.first_name || userData.firstName || '',
@@ -70,6 +74,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             email: authUser.user.email || '',
             user_type: userData.user_type || userData.userType || 'renter'
           })
+          console.log('Created facility user:', facilityUser)
         }
       }
       

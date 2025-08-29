@@ -2,10 +2,12 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { Menu, X, MapPin, User } from 'lucide-react'
+import { Menu, X, MapPin, User, LogOut } from 'lucide-react'
+import { useAuth } from '@/lib/auth'
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const { user, facilityUser, signOut } = useAuth()
 
   return (
     <header className="bg-white shadow-sm border-b">
@@ -34,12 +36,29 @@ export default function Header() {
 
           {/* Desktop Auth Buttons */}
           <div className="hidden md:flex items-center space-x-4">
-            <Link href="/login" className="text-gray-700 hover:text-primary-600 transition-colors">
-              Sign In
-            </Link>
-            <Link href="/register" className="btn-primary">
-              Sign Up
-            </Link>
+            {user ? (
+              <>
+                <span className="text-gray-700">
+                  Welcome, {facilityUser?.first_name || user.email}
+                </span>
+                <button
+                  onClick={signOut}
+                  className="flex items-center space-x-1 text-gray-700 hover:text-primary-600 transition-colors"
+                >
+                  <LogOut className="w-4 h-4" />
+                  <span>Sign Out</span>
+                </button>
+              </>
+            ) : (
+              <>
+                <Link href="/login" className="text-gray-700 hover:text-primary-600 transition-colors">
+                  Sign In
+                </Link>
+                <Link href="/register" className="btn-primary">
+                  Sign Up
+                </Link>
+              </>
+            )}
           </div>
 
           {/* Mobile menu button */}
@@ -77,20 +96,40 @@ export default function Header() {
                 List Your Facility
               </Link>
               <div className="flex flex-col space-y-2 pt-4 border-t">
-                <Link 
-                  href="/login" 
-                  className="text-gray-700 hover:text-primary-600 transition-colors"
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  Sign In
-                </Link>
-                <Link 
-                  href="/register" 
-                  className="btn-primary text-center"
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  Sign Up
-                </Link>
+                {user ? (
+                  <>
+                    <span className="text-gray-700">
+                      Welcome, {facilityUser?.first_name || user.email}
+                    </span>
+                    <button
+                      onClick={() => {
+                        signOut()
+                        setIsMenuOpen(false)
+                      }}
+                      className="flex items-center space-x-1 text-gray-700 hover:text-primary-600 transition-colors"
+                    >
+                      <LogOut className="w-4 h-4" />
+                      <span>Sign Out</span>
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <Link 
+                      href="/login" 
+                      className="text-gray-700 hover:text-primary-600 transition-colors"
+                      onClick={() => setIsMenuOpen(false)}
+                    >
+                      Sign In
+                    </Link>
+                    <Link 
+                      href="/register" 
+                      className="btn-primary text-center"
+                      onClick={() => setIsMenuOpen(false)}
+                    >
+                      Sign Up
+                    </Link>
+                  </>
+                )}
               </div>
             </div>
           </div>

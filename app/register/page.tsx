@@ -65,7 +65,7 @@ export default function RegisterPage() {
         setError(error.message)
       } else {
         // Registration successful
-        alert('Registration successful! Please check your email to verify your account.')
+        alert('Registration successful! You can now log in with your credentials.')
         router.push('/login')
       }
     } catch (err) {
