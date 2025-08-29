@@ -236,13 +236,13 @@ export default function FacilityDetailPage({ params }: { params: { id: string } 
                 <span className="text-sm text-primary-600 font-medium">{facility.type}</span>
                 <div className="flex items-center space-x-1">
                   <Star className={`w-5 h-5 ${facility.rating ? 'text-yellow-400 fill-current' : 'text-gray-300'}`} />
-                  <span className="font-medium">
-                    {facility.rating || (
-                      <span className="text-gray-500">(no reviews yet)</span>
-                    )}
-                  </span>
-                  {facility.review_count && facility.review_count > 0 && (
-                    <span className="text-gray-500">({facility.review_count} reviews)</span>
+                  {facility.rating && (
+                    <>
+                      <span className="font-medium">{facility.rating}</span>
+                      {facility.review_count && facility.review_count > 0 && (
+                        <span className="text-gray-500">({facility.review_count} reviews)</span>
+                      )}
+                    </>
                   )}
                 </div>
               </div>

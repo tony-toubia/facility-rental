@@ -298,13 +298,13 @@ export default function BrowsePage() {
                           <span className="text-sm text-primary-600 font-medium">{facility.type}</span>
                           <div className="flex items-center space-x-1">
                             <Star className={`w-4 h-4 ${facility.rating ? 'text-yellow-400 fill-current' : 'text-gray-300'}`} />
-                            <span className="text-sm font-medium">
-                              {facility.rating || (
-                                <span className="text-gray-500">(no reviews yet)</span>
-                              )}
-                            </span>
-                            {facility.review_count && facility.review_count > 0 && (
-                              <span className="text-sm text-gray-500">({facility.review_count})</span>
+                            {facility.rating && (
+                              <>
+                                <span className="text-sm font-medium">{facility.rating}</span>
+                                {facility.review_count && facility.review_count > 0 && (
+                                  <span className="text-sm text-gray-500">({facility.review_count})</span>
+                                )}
+                              </>
                             )}
                           </div>
                         </div>
