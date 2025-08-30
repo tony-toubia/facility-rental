@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Google APIs Test</title>
+</head>
+<body>
+    <h1>Google APIs Test</h1>
+    <div id="results"></div>
+    
+    <script>
+        const API_KEY = 'AIzaSyA335n74ditjbBm1bv-qJDWTK595u2HTX0';
+        const results = document.getElementById('results');
+        
+        function addResult(test, status, message) {
+            const div = document.createElement('div');
+            div.innerHTML = `<strong>${test}:</strong> <span style="color: ${status === 'success' ? 'green' : 'red'}">${status}</span> - ${message}`;
+            results.appendChild(div);
+        }
+        
+        // Test Places API
+        function testPlacesAPI() {
+            const service = new google.maps.places.AutocompleteService();
+            service.getPlacePredictions({
+                input: 'New York',
+                types: ['(cities)']
+            }, (predictions, status) => {
+                if (status === google.maps.places.PlacesServiceStatus.OK) {
+                    addResult('Places API', 'success', 'Working correctly');
+                } else {
+                    addResult('Places API', 'error', `Status: ${status}`);
+                }
+            });
+        }
+        
+        // Test Geocoding API
+        function testGeocodingAPI() {
+            const geocoder = new google.maps.Geocoder();
+            geocoder.geocode({ address: 'New York, NY' }, (results, status) => {
+                if (status === 'OK') {
+                    addResult('Geocoding API', 'success', 'Working correctly');
+                } else {
+                    addResult('Geocoding API', 'error', `Status: ${status}`);
+                }
+            });
+        }
+        
+        // Test Maps JavaScript API
+        function testMapsAPI() {
+            try {
+                const map = new google.maps.Map(document.createElement('div'), {
+                    center: { lat: 40.7128, lng: -74.0060 },
+                    zoom: 8
+                });
+                addResult('Maps JavaScript API', 'success', 'Working correctly');
+            } catch (error) {
+                addResult('Maps JavaScript API', 'error', error.message);
+            }
+        }
+        
+        function runTests() {
+            addResult('API Key', 'info', API_KEY);
+            testMapsAPI();
+            testPlacesAPI();
+            testGeocodingAPI();
+        }
+        
+        // Load Google Maps API and run tests
+        window.initMap = runTests;
+    </script>
+    
+    <script async defer 
+        src="https://maps.googleapis.com/maps/api/js?key=AIzaSyA335n74ditjbBm1bv-qJDWTK595u2HTX0&libraries=places&callback=initMap">
+    </script>
+</body>
+</html>

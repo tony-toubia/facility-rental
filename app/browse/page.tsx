@@ -1,13 +1,16 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import { useSearchParams } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
 import { Search, Filter, MapPin, Star, DollarSign, Grid, List, Navigation } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/lib/auth'
-import { getFacilitiesWithinRadius, getBrowserLocation, geocodeAddress, LocationData } from '@/lib/geolocation'
-import LocationAutocomplete from '@/components/LocationAutocomplete'
+import { getFacilitiesWithinRadius, getBrowserLocation, geocodeAddress, LocationData } from '@/lib/geolocation-new'
+import LocationAutocompleteNew from '@/components/LocationAutocompleteNew'
+import CategoryCheckboxList from '@/components/CategoryCheckboxList'
+import { FACILITY_CATEGORIES } from '@/data/facility-categories'
 
 interface Facility {
   id: string
@@ -28,6 +31,8 @@ interface Facility {
   created_at: string
   owner_id: string
   distance?: number // Distance in miles from search location
+  categories?: string[] // Array of category names
+  primary_category?: string // Primary category name
   facility_users?: {
     first_name: string
     last_name: string
@@ -54,8 +59,10 @@ const sortOptions = ['Relevance', 'Price: Low to High', 'Price: High to Low', 'R
 
 export default function BrowsePage() {
   const { facilityUser } = useAuth()
+  const searchParams = useSearchParams()
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('All')
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([])
   const [selectedPriceRange, setSelectedPriceRange] = useState('All')
   const [sortBy, setSortBy] = useState('Distance')
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
@@ -106,6 +113,7 @@ export default function BrowsePage() {
           radius: radiusMiles
         })
         
+        // Use new Places API version
         const { data, error } = await getFacilitiesWithinRadius(
           userLocation.latitude,
           userLocation.longitude,
@@ -175,18 +183,100 @@ export default function BrowsePage() {
     }
   }, [])
 
+  // Handle URL parameters from home page search
+  useEffect(() => {
+    const search = searchParams.get('search')
+    const locationParam = searchParams.get('location')
+    const dateParam = searchParams.get('date')
+    const categoriesParam = searchParams.get('categories')
+
+    if (search) {
+      setSearchQuery(search)
+    }
+
+    if (locationParam) {
+      try {
+        const locationData = JSON.parse(locationParam)
+        setUserLocation(locationData)
+      } catch (error) {
+        console.error('Error parsing location parameter:', error)
+      }
+    }
+
+    if (categoriesParam) {
+      // Handle single category selection from homepage
+      setSelectedCategories([categoriesParam])
+    }
+
+    // Note: date parameter could be used for future booking functionality
+    if (dateParam) {
+      console.log('Date parameter received:', dateParam)
+    }
+  }, [searchParams])
+
+  const formatDistance = (distance: number): string => {
+    if (distance < 1) {
+      return '<1 mi'
+    }
+    return `${Math.round(distance)} mi`
+  }
+
   const filteredFacilities = facilities.filter(facility => {
     const matchesSearch = facility.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          facility.type.toLowerCase().includes(searchQuery.toLowerCase())
-    const matchesCategory = selectedCategory === 'All' || facility.type === selectedCategory
+    
+    // Legacy category filter (keep for backward compatibility)
+    const matchesLegacyCategory = selectedCategory === 'All' || facility.type === selectedCategory
+    
+    // New category filter - check if facility has any of the selected categories
+    const matchesNewCategories = selectedCategories.length === 0 || 
+      (facility as any).categories?.some((cat: string) => 
+        selectedCategories.some(selectedCat => 
+          FACILITY_CATEGORIES.find(fc => fc.id === selectedCat)?.name === cat
+        )
+      )
+    
     const matchesPriceRange = selectedPriceRange === 'All' || 
       (selectedPriceRange === '$0-25' && facility.price <= 25) ||
       (selectedPriceRange === '$26-50' && facility.price >= 26 && facility.price <= 50) ||
       (selectedPriceRange === '$51-75' && facility.price >= 51 && facility.price <= 75) ||
       (selectedPriceRange === '$76+' && facility.price >= 76)
     
-    return matchesSearch && matchesCategory && matchesPriceRange
+    return matchesSearch && matchesLegacyCategory && matchesNewCategories && matchesPriceRange
   })
+
+  // Sort the filtered facilities
+  const sortedFacilities = [...filteredFacilities].sort((a, b) => {
+    switch (sortBy) {
+      case 'Price: Low to High':
+        return a.price - b.price
+      case 'Price: High to Low':
+        return b.price - a.price
+      case 'Rating':
+        const aRating = a.rating || 0
+        const bRating = b.rating || 0
+        return bRating - aRating // Higher ratings first
+      case 'Distance':
+        if (userLocation && a.distance !== undefined && b.distance !== undefined) {
+          return a.distance - b.distance // Closer facilities first
+        }
+        return 0
+      case 'Relevance':
+      default:
+        // For relevance, prioritize exact name matches, then type matches
+        const aNameMatch = a.name.toLowerCase().includes(searchQuery.toLowerCase()) ? 1 : 0
+        const bNameMatch = b.name.toLowerCase().includes(searchQuery.toLowerCase()) ? 1 : 0
+        if (aNameMatch !== bNameMatch) {
+          return bNameMatch - aNameMatch
+        }
+        // Then sort by rating as secondary criteria
+        const aRatingRel = a.rating || 0
+        const bRatingRel = b.rating || 0
+        return bRatingRel - aRatingRel
+    }
+  })
+
+
 
   const handleShowAll = () => {
     setUserLocation(null)
@@ -230,6 +320,7 @@ export default function BrowsePage() {
                   <option value={50}>50 miles</option>
                   <option value={100}>100 miles</option>
                 </select>
+
                 <button
                   onClick={handleShowAll}
                   className="text-sm text-primary-600 hover:text-primary-500 font-medium"
@@ -254,7 +345,7 @@ export default function BrowsePage() {
                 />
               </div>
               <div className="flex-1">
-                <LocationAutocomplete
+                <LocationAutocompleteNew
                   onLocationSelect={handleLocationSelect}
                   onClear={handleLocationClear}
                   placeholder="Search for a location..."
@@ -263,6 +354,7 @@ export default function BrowsePage() {
                   className="w-full"
                 />
               </div>
+
             </div>
             <button
               onClick={() => setShowFilters(!showFilters)}
@@ -282,22 +374,14 @@ export default function BrowsePage() {
             <div className="bg-white rounded-lg shadow-sm p-6 space-y-6">
               {/* Category Filter */}
               <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-3">Category</h3>
-                <div className="space-y-2">
-                  {categories.map(category => (
-                    <label key={category} className="flex items-center">
-                      <input
-                        type="radio"
-                        name="category"
-                        value={category}
-                        checked={selectedCategory === category}
-                        onChange={(e) => setSelectedCategory(e.target.value)}
-                        className="text-primary-600 focus:ring-primary-500"
-                      />
-                      <span className="ml-2 text-gray-700">{category}</span>
-                    </label>
-                  ))}
-                </div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-3">Categories</h3>
+                <CategoryCheckboxList
+                  selectedCategories={selectedCategories}
+                  onCategoriesChange={setSelectedCategories}
+                  allowMultiple={true}
+                  maxSelections={3}
+                  className="w-full"
+                />
               </div>
 
               {/* Price Range Filter */}
@@ -327,7 +411,7 @@ export default function BrowsePage() {
             {/* Results Header */}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
               <p className="text-gray-600 mb-4 sm:mb-0">
-                {filteredFacilities.length} facilities found
+                {sortedFacilities.length} facilities found
               </p>
               
               <div className="flex items-center space-x-4">
@@ -380,13 +464,13 @@ export default function BrowsePage() {
                     Try Again
                   </button>
                 </div>
-              ) : filteredFacilities.length === 0 ? (
+              ) : sortedFacilities.length === 0 ? (
                 <div className="text-center py-12">
                   <p className="text-gray-500 text-lg">No facilities found matching your criteria.</p>
                   <p className="text-gray-400 mt-2">Try adjusting your filters or search terms.</p>
                 </div>
               ) : (
-                filteredFacilities.map((facility) => {
+                sortedFacilities.map((facility) => {
                   const primaryImage = facility.facility_images?.find(img => img.is_primary)?.image_url || 
                                      facility.facility_images?.[0]?.image_url ||
                                      'https://via.placeholder.com/500x300?text=No+Image'
@@ -405,15 +489,21 @@ export default function BrowsePage() {
                       }`}
                     >
                       <div className={`relative ${viewMode === 'list' ? 'w-48 h-32' : 'h-48'}`}>
-                        <Image
-                          src={primaryImage}
-                          alt={facility.name}
-                          fill
-                          className="object-cover group-hover:scale-105 transition-transform duration-200"
-                          onError={(e) => {
-                            e.currentTarget.src = 'https://via.placeholder.com/500x300?text=No+Image'
-                          }}
-                        />
+                        {primaryImage && primaryImage !== 'https://via.placeholder.com/500x300?text=No+Image' ? (
+                          <Image
+                            src={primaryImage}
+                            alt={facility.name}
+                            fill
+                            className="object-cover group-hover:scale-105 transition-transform duration-200"
+                          />
+                        ) : (
+                          <div className="w-full h-full bg-gray-200 flex items-center justify-center">
+                            <div className="text-gray-500 text-center">
+                              <div className="text-2xl mb-2">🏢</div>
+                              <div className="text-sm">No Image</div>
+                            </div>
+                          </div>
+                        )}
                         <div className="absolute top-3 right-3 bg-white px-2 py-1 rounded-full text-xs font-medium text-green-600">
                           Available
                         </div>
@@ -448,10 +538,37 @@ export default function BrowsePage() {
                           </div>
                           {facility.distance && (
                             <span className="text-primary-600 font-medium">
-                              {facility.distance} mi
+                              {formatDistance(facility.distance)}
                             </span>
                           )}
                         </div>
+
+                        {/* Categories Display */}
+                        {facility.categories && facility.categories.length > 0 && (
+                          <div className="flex flex-wrap gap-1 mb-3">
+                            {facility.categories.slice(0, 3).map((category, index) => {
+                              const categoryData = FACILITY_CATEGORIES.find(cat => cat.name === category)
+                              const isPrimary = category === facility.primary_category
+                              return (
+                                <span
+                                  key={index}
+                                  className={`text-xs px-2 py-1 rounded-full flex items-center space-x-1 ${
+                                    isPrimary 
+                                      ? 'bg-primary-100 text-primary-700 border border-primary-200' 
+                                      : 'bg-blue-50 text-blue-600'
+                                  }`}
+                                >
+                                  <span>{category}</span>
+                                </span>
+                              )
+                            })}
+                            {facility.categories.length > 3 && (
+                              <span className="text-xs bg-gray-100 text-gray-500 px-2 py-1 rounded-full">
+                                +{facility.categories.length - 3} more
+                              </span>
+                            )}
+                          </div>
+                        )}
 
                         {allFeatures.length > 0 && (
                           <div className="flex flex-wrap gap-1 mb-3">

@@ -1,17 +1,62 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
+import { useRouter } from 'next/navigation'
 import { Search, MapPin, Calendar } from 'lucide-react'
+import LocationAutocompleteNew from './LocationAutocompleteNew'
+import { LocationData } from '@/lib/geolocation-new'
 
 export default function Hero() {
+  const router = useRouter()
   const [searchQuery, setSearchQuery] = useState('')
-  const [location, setLocation] = useState('')
+  const [selectedLocation, setSelectedLocation] = useState<LocationData | null>(null)
   const [date, setDate] = useState('')
+
+  const handleLocationSelect = useCallback((location: LocationData) => {
+    setSelectedLocation(location)
+  }, [])
+
+  const handleLocationClear = useCallback(() => {
+    setSelectedLocation(null)
+  }, [])
+
+  const formatLocationDisplay = (location: LocationData) => {
+    if (location.city && location.state) {
+      return `${location.city}, ${location.state}`
+    } else if (location.state) {
+      return location.state
+    } else {
+      return location.address
+    }
+  }
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
-    // Handle search logic here
-    console.log('Search:', { searchQuery, location, date })
+    
+    // Build URL parameters for the browse page
+    const params = new URLSearchParams()
+    
+    if (searchQuery.trim()) {
+      params.set('search', searchQuery.trim())
+    }
+    
+    if (selectedLocation) {
+      params.set('location', JSON.stringify({
+        address: selectedLocation.address,
+        city: selectedLocation.city,
+        state: selectedLocation.state,
+        latitude: selectedLocation.latitude,
+        longitude: selectedLocation.longitude
+      }))
+    }
+    
+    if (date) {
+      params.set('date', date)
+    }
+    
+    // Navigate to browse page with search parameters
+    const url = `/browse${params.toString() ? `?${params.toString()}` : ''}`
+    router.push(url)
   }
 
   return (
@@ -46,7 +91,7 @@ export default function Hero() {
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="Basketball court, swimming pool, gym..."
-                    className="input-field pl-10"
+                    className="input-field pl-10 text-gray-900 placeholder-gray-500"
                   />
                 </div>
               </div>
@@ -56,17 +101,14 @@ export default function Hero() {
                 <label htmlFor="location" className="block text-sm font-medium text-gray-700 mb-2">
                   Where?
                 </label>
-                <div className="relative">
-                  <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                  <input
-                    type="text"
-                    id="location"
-                    value={location}
-                    onChange={(e) => setLocation(e.target.value)}
-                    placeholder="City, ZIP code"
-                    className="input-field pl-10"
-                  />
-                </div>
+                <LocationAutocompleteNew
+                  onLocationSelect={handleLocationSelect}
+                  onClear={handleLocationClear}
+                  placeholder="City, ZIP code"
+                  value={selectedLocation ? formatLocationDisplay(selectedLocation) : ''}
+                  showClearButton={!!selectedLocation}
+                  className="w-full"
+                />
               </div>
 
               {/* When */}
@@ -81,7 +123,7 @@ export default function Hero() {
                     id="date"
                     value={date}
                     onChange={(e) => setDate(e.target.value)}
-                    className="input-field pl-10"
+                    className="input-field pl-10 text-gray-900"
                   />
                 </div>
               </div>
@@ -98,16 +140,16 @@ export default function Hero() {
         {/* Stats */}
         <div className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
           <div>
-            <div className="text-3xl font-bold text-yellow-300">1,000+</div>
+            <div className="text-3xl font-bold text-yellow-300">290+</div>
             <div className="text-blue-100">Facilities Available</div>
           </div>
           <div>
             <div className="text-3xl font-bold text-yellow-300">50+</div>
-            <div className="text-blue-100">Cities Covered</div>
+            <div className="text-blue-100">Midwest Cities</div>
           </div>
           <div>
-            <div className="text-3xl font-bold text-yellow-300">10,000+</div>
-            <div className="text-blue-100">Happy Customers</div>
+            <div className="text-3xl font-bold text-yellow-300">25+</div>
+            <div className="text-blue-100">Facility Types</div>
           </div>
         </div>
       </div>

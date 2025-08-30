@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from 'react'
 import { MapPin, Navigation, AlertCircle } from 'lucide-react'
-import LocationAutocomplete from './LocationAutocomplete'
-import { LocationData, geocodeAddress } from '@/lib/geolocation'
+import LocationAutocompleteNew from './LocationAutocompleteNew'
+import { LocationData, geocodeAddress } from '@/lib/geolocation-new'
 
 interface FacilityLocationPickerProps {
   initialAddress?: string
@@ -125,7 +125,7 @@ export default function FacilityLocationPicker({
         <label className="block text-sm font-medium text-gray-700 mb-2">
           Search for Location
         </label>
-        <LocationAutocomplete
+        <LocationAutocompleteNew
           onLocationSelect={handleLocationSelect}
           placeholder="Search for your facility's address..."
           className="w-full"
