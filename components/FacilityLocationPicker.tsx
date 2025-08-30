@@ -59,7 +59,7 @@ export default function FacilityLocationPicker({
       address: location.address,
       city: location.city,
       state: location.state,
-      zipCode: location.zipCode || '',
+      zipCode: '',
       latitude: location.latitude,
       longitude: location.longitude
     }
@@ -101,7 +101,7 @@ export default function FacilityLocationPicker({
           address: result.address,
           city: result.city || locationData.city,
           state: result.state || locationData.state,
-          zipCode: result.zipCode || locationData.zipCode,
+          zipCode: locationData.zipCode,
           latitude: result.latitude,
           longitude: result.longitude
         }
@@ -127,11 +127,12 @@ export default function FacilityLocationPicker({
         </label>
         <LocationAutocompleteNew
           onLocationSelect={handleLocationSelect}
+          onClear={() => {}}
           placeholder="Search for your facility's address..."
           className="w-full"
         />
         <p className="text-xs text-gray-500 mt-1">
-          Start typing to search for your facility's address using Google Places
+          Start typing to search for your facility&apos;s address using Google Places
         </p>
       </div>
 

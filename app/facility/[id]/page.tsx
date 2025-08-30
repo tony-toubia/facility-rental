@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import Image from 'next/image'
 import { Star, MapPin, Clock, DollarSign, Wifi, Car, Users, Shield, Calendar, ChevronLeft, ChevronRight } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
@@ -50,11 +50,7 @@ export default function FacilityDetailPage({ params }: { params: { id: string } 
   const [selectedDate, setSelectedDate] = useState('today')
   const [selectedTime, setSelectedTime] = useState('')
 
-  useEffect(() => {
-    loadFacility()
-  }, [params.id])
-
-  const loadFacility = async () => {
+  const loadFacility = useCallback(async () => {
     try {
       setLoading(true)
       setError(null)
@@ -100,7 +96,11 @@ export default function FacilityDetailPage({ params }: { params: { id: string } 
     } finally {
       setLoading(false)
     }
-  }
+  }, [params.id])
+
+  useEffect(() => {
+    loadFacility()
+  }, [loadFacility])
 
   const images = facility?.facility_images || []
   const sortedImages = images.sort((a, b) => {

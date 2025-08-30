@@ -100,7 +100,6 @@ export default function CategorySelector({
                   className="w-full p-3 text-left hover:bg-gray-50 flex items-center justify-between"
                 >
                   <div className="flex items-center space-x-2">
-                    <span className="text-lg">{parent.icon}</span>
                     <span className="font-medium text-gray-900">{parent.name}</span>
                     <span className="text-sm text-gray-500">({childCategories.length})</span>
                   </div>
@@ -124,7 +123,6 @@ export default function CategorySelector({
                           } ${isSelected ? 'bg-primary-50' : ''}`}
                         >
                           <div className="flex items-center space-x-3">
-                            <span className="text-base">{category.icon}</span>
                             <div>
                               <div className={`font-medium ${isSelected ? 'text-primary-700' : 'text-gray-900'}`}>
                                 {category.name}

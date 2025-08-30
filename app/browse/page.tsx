@@ -122,7 +122,7 @@ export default function BrowsePage() {
         
         if (error) {
           console.error('Error loading facilities with radius:', error)
-          setError(`Failed to load facilities: ${error.message}`)
+          setError(`Failed to load facilities: ${error}`)
         } else {
           console.log('Loaded facilities with distance:', data?.length)
           setFacilities(data || [])
@@ -181,7 +181,7 @@ export default function BrowsePage() {
     if (!userLocation) {
       loadUserLocationFromBrowser()
     }
-  }, [])
+  }, [userLocation, loadUserLocationFromBrowser])
 
   // Handle URL parameters from home page search
   useEffect(() => {
