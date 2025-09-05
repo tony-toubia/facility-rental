@@ -19,6 +19,7 @@ interface LocationAutocompleteProps {
   value?: string
   showClearButton?: boolean
   className?: string
+  disabled?: boolean
 }
 
 export default function LocationAutocompleteNew({
@@ -27,7 +28,8 @@ export default function LocationAutocompleteNew({
   placeholder = "Search for a location...",
   value = "",
   showClearButton = false,
-  className = ""
+  className = "",
+  disabled = false
 }: LocationAutocompleteProps) {
   const [inputValue, setInputValue] = useState(value)
   const [suggestions, setSuggestions] = useState<any[]>([])

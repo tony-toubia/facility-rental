@@ -30,6 +30,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [facilityUser, setFacilityUser] = useState<FacilityUser | null>(null)
   const [loading, setLoading] = useState(true)
   const hasCheckedInitialSession = useRef(false)
+  const currentUserRef = useRef<User | null>(null)
 
   useEffect(() => {
     // Check if we just signed out (from URL parameter)
@@ -74,10 +75,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (session?.user) {
           console.log('Valid session found, loading user data...')
           setUser(session.user)
+          currentUserRef.current = session.user
           await loadFacilityUser(session.user.id)
         } else {
           console.log('No valid session found')
           setUser(null)
+          currentUserRef.current = null
           setFacilityUser(null)
           setLoading(false)
         }
@@ -100,31 +103,37 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           console.log('User signed out, clearing facility user...')
           setFacilityUser(null)
           setUser(null)
+          currentUserRef.current = null
           setLoading(false)
         } else if (event === 'SIGNED_IN' && session?.user) {
           console.log('User signed in, loading facility user...')
           setUser(session.user)
+          currentUserRef.current = session.user
           await loadFacilityUser(session.user.id)
         } else if (event === 'TOKEN_REFRESHED') {
           console.log('Token refreshed')
           // Only update user if it's actually different to prevent unnecessary re-renders
-          if (session?.user && session.user.id !== user?.id) {
+          if (session?.user && session.user.id !== currentUserRef.current?.id) {
             setUser(session.user)
+            currentUserRef.current = session.user
           }
         } else {
           console.log('Other auth event:', event)
           // For INITIAL_SESSION, only set user if we don't already have one
           if (event === 'INITIAL_SESSION') {
-            if (!user && session?.user) {
+            if (!currentUserRef.current && session?.user) {
               setUser(session.user)
+              currentUserRef.current = session.user
               await loadFacilityUser(session.user.id)
             } else if (!session?.user) {
               setUser(null)
+              currentUserRef.current = null
               setFacilityUser(null)
               setLoading(false)
             }
           } else {
             setUser(session?.user ?? null)
+            currentUserRef.current = session?.user ?? null
             if (!session?.user) {
               setFacilityUser(null)
               setLoading(false)
