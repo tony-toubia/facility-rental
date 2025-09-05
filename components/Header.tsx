@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState } from 'react'
 import Link from 'next/link'
 import { Menu, X, MapPin, User, LogOut } from 'lucide-react'
 import { useAuth } from '@/lib/auth'
@@ -8,32 +8,6 @@ import { useAuth } from '@/lib/auth'
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const { user, facilityUser, loading, signOut, refreshFacilityUser } = useAuth()
-  
-  // Store the last known proper name to prevent flickering
-  const lastKnownNameRef = useRef<string>('')
-  
-  // Update the last known name when we have a proper name
-  useEffect(() => {
-    if (facilityUser?.first_name) {
-      lastKnownNameRef.current = facilityUser.first_name
-    }
-  }, [facilityUser?.first_name])
-  
-  // Compute display name with fallback logic
-  const getDisplayName = () => {
-    // If we have a current proper name, use it
-    if (facilityUser?.first_name) {
-      return facilityUser.first_name
-    }
-    
-    // If we have a last known proper name, use it (prevents flickering)
-    if (lastKnownNameRef.current) {
-      return lastKnownNameRef.current
-    }
-    
-    // Fall back to email username or 'User'
-    return user?.email?.split('@')[0] || 'User'
-  }
 
   return (
     <header className="bg-white shadow-sm border-b">
@@ -68,7 +42,7 @@ export default function Header() {
                   Dashboard
                 </Link>
                 <span className="text-gray-700">
-                  Welcome, {getDisplayName()}
+                  Welcome, {facilityUser?.first_name || user?.email?.split('@')[0] || 'User'}
                   {/* Removed loading indicator for better UX */}
                   {user && !facilityUser?.first_name && facilityUser && (
                     <button
@@ -148,7 +122,7 @@ export default function Header() {
                       Dashboard
                     </Link>
                     <span className="text-gray-700">
-                      Welcome, {getDisplayName()}
+                      Welcome, {facilityUser?.first_name || user?.email?.split('@')[0] || 'User'}
                       {/* Removed loading indicator for better UX */}
                       {user && !facilityUser?.first_name && facilityUser && (
                         <button
