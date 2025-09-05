@@ -362,15 +362,15 @@ export default function AdminPage() {
     // Check that all previous feedback has been addressed (only if this is a resubmission)
     const isResubmission = !!review.previous_review_id
     const allPreviousFeedbackAddressed = !isResubmission || (
-      (!review.basic_info_comments || review.basic_info_addressed) &&
-      (!review.description_comments || review.description_addressed) &&
-      (!review.location_comments || review.location_addressed) &&
-      (!review.pricing_comments || review.pricing_addressed) &&
-      (!review.amenities_comments || review.amenities_addressed) &&
-      (!review.features_comments || review.features_addressed) &&
-      (!review.images_comments || review.images_addressed) &&
-      (!review.policies_comments || review.policies_addressed) &&
-      (!review.availability_comments || review.availability_addressed)
+      (!review.basic_info_comments || (review.basic_info_addressed ?? false)) &&
+      (!review.description_comments || (review.description_addressed ?? false)) &&
+      (!review.location_comments || (review.location_addressed ?? false)) &&
+      (!review.pricing_comments || (review.pricing_addressed ?? false)) &&
+      (!review.amenities_comments || (review.amenities_addressed ?? false)) &&
+      (!review.features_comments || (review.features_addressed ?? false)) &&
+      (!review.images_comments || (review.images_addressed ?? false)) &&
+      (!review.policies_comments || (review.policies_addressed ?? false)) &&
+      (!review.availability_comments || (review.availability_addressed ?? false))
     )
     
     return basicSectionsApproved && availabilityApproved && allPreviousFeedbackAddressed
