@@ -7,7 +7,6 @@ import { useAuth } from '@/lib/auth'
 import { createFacility, uploadFacilityImage, createFacilityAmenities, createFacilityFeatures, createFacilityCategoryAssignments } from '@/lib/database'
 import { saveFacilityAvailability } from '@/lib/availability-database'
 import CategoryButtonSelector from '@/components/CategoryButtonSelector'
-import AvailabilityConfigurator, { AvailabilityConfig } from '@/components/AvailabilityConfigurator'
 
 export default function ListFacilityPage() {
   const router = useRouter()
@@ -27,7 +26,7 @@ export default function ListFacilityPage() {
     amenities: [] as string[],
     features: [] as string[],
     images: [] as File[],
-    availability: null as AvailabilityConfig | null
+    availability: null as any
   })
 
   const [isLoading, setIsLoading] = useState(false)
@@ -45,7 +44,7 @@ export default function ListFacilityPage() {
       formData.zipCode.trim() !== '' &&
       formData.price.trim() !== '' &&
       formData.capacity.trim() !== '' &&
-      formData.availability !== null &&
+      true && // Availability will be configured after approval
       user &&
       facilityUser
     )
@@ -58,7 +57,7 @@ export default function ListFacilityPage() {
     }))
   }, [])
 
-  const handleAvailabilityChange = useCallback((availability: AvailabilityConfig) => {
+  const handleAvailabilityChange = useCallback((availability: any) => {
     setFormData(prev => ({
       ...prev,
       availability
@@ -238,10 +237,7 @@ export default function ListFacilityPage() {
         await createFacilityCategoryAssignments(facility.id, formData.categories)
       }
 
-      // Save availability configuration
-      if (formData.availability) {
-        await saveFacilityAvailability(facility.id, formData.availability)
-      }
+      // Availability will be configured after approval by the admin team
       
       alert('Facility listing submitted successfully! It will be reviewed before going live.')
       router.push('/') // Redirect to home page
@@ -559,15 +555,19 @@ export default function ListFacilityPage() {
             {/* Availability Configuration */}
             <div>
               <h2 className="text-xl font-semibold text-gray-900 mb-4">Availability & Scheduling</h2>
-              <p className="text-sm text-gray-600 mb-6">
-                Configure when your facility is available for booking. This helps potential renters know when they can use your space.
-              </p>
-              <AvailabilityConfigurator
-                onAvailabilityChange={handleAvailabilityChange}
-                initialConfig={formData.availability || undefined}
-                facilityCity={formData.city}
-                facilityState={formData.state}
-              />
+              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
+                <div className="flex items-center mb-3">
+                  <Clock className="w-5 h-5 text-yellow-600 mr-2" />
+                  <h3 className="text-lg font-medium text-yellow-800">Availability Configuration</h3>
+                </div>
+                <p className="text-sm text-yellow-700 mb-4">
+                  Availability scheduling will be configured after your facility is approved.
+                  Our team will work with you to set up the optimal schedule for your space.
+                </p>
+                <div className="text-xs text-yellow-600">
+                  <strong>Note:</strong> This helps potential renters know when they can book your facility.
+                </div>
+              </div>
             </div>
 
             {/* Terms and Conditions */}

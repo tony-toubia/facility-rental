@@ -1,5 +1,19 @@
 import { supabase } from './supabase'
-import { AvailabilityConfig } from '@/components/AvailabilityConfigurator'
+
+// Define AvailabilityConfig interface locally
+interface AvailabilityConfig {
+  availabilityIncrement: number
+  minimumRentalDuration?: number
+  timezone: string
+  weeklySchedule: {
+    day: number
+    dayName: string
+    isAvailable: boolean
+    timeSlots: { start: string; end: string }[]
+  }[]
+  selectedHolidays?: string[]
+  notes?: string
+}
 
 export interface FacilityAvailabilityData {
   facility_id: string
@@ -106,7 +120,7 @@ export async function saveFacilityAvailability(
     }
 
     // 5. Get holiday template IDs from database
-    if (config.selectedHolidays.length > 0) {
+    if (config.selectedHolidays && config.selectedHolidays.length > 0) {
       const holidayNames = config.selectedHolidays.map(id => HOLIDAY_ID_MAP[id] || id)
       
       const { data: holidayTemplates, error: holidayFetchError } = await supabase

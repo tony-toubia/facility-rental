@@ -5,8 +5,6 @@ import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/lib/auth'
 import { CheckCircle, XCircle, Eye, Clock, MapPin, DollarSign, MessageSquare, AlertCircle } from 'lucide-react'
-import StatusIconSelector from '@/components/StatusIconSelector'
-import ChangeTracker from '@/components/ChangeTracker'
 import Image from 'next/image'
 
 interface Facility {
@@ -125,10 +123,15 @@ const ReviewSection = ({
     <div className="border border-gray-200 rounded-lg p-4 mb-4">
       <div className="flex justify-between items-start mb-3">
         <h4 className="font-medium text-gray-900">{title}</h4>
-        <StatusIconSelector
-          value={currentStatus as 'pending' | 'approved' | 'needs_changes'}
-          onChange={(value) => updateReviewField(facilityId, statusField, value)}
-        />
+        <select
+          value={currentStatus}
+          onChange={(e) => updateReviewField(facilityId, statusField, e.target.value)}
+          className="px-3 py-1 text-sm border border-gray-300 rounded"
+        >
+          <option value="pending">Pending</option>
+          <option value="approved">Approved</option>
+          <option value="needs_changes">Needs Changes</option>
+        </select>
       </div>
       
       <div className="mb-3">
@@ -853,11 +856,12 @@ export default function AdminPage() {
                         <div className="border-t pt-6 mt-6">
                           {/* Show changes if this is a resubmission */}
                           {review.previous_review_id && (
-                            <div className="mb-6">
-                              <ChangeTracker 
-                                facilityId={facility.id} 
-                                previousReviewId={review.previous_review_id} 
-                              />
+                            <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded">
+                              <h4 className="font-medium text-yellow-800 mb-2">Resubmission</h4>
+                              <p className="text-sm text-yellow-700">
+                                This facility has been resubmitted after previous feedback.
+                                Please review the changes and ensure all previous issues have been addressed.
+                              </p>
                             </div>
                           )}
                           <h3 className="text-lg font-semibold text-gray-900 mb-4">Detailed Review</h3>

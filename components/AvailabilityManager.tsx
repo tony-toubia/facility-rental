@@ -2,7 +2,20 @@
 
 import { useState, useEffect } from 'react'
 import { Calendar, Clock, Plus, Trash2, Edit, Save, X, AlertCircle } from 'lucide-react'
-import { AvailabilityConfig } from './AvailabilityConfigurator'
+// Define a simple availability config type
+interface AvailabilityConfig {
+  availabilityIncrement: number
+  minimumRentalDuration?: number
+  timezone: string
+  weeklySchedule: {
+    day: number
+    dayName: string
+    isAvailable: boolean
+    timeSlots: { start: string; end: string }[]
+  }[]
+  selectedHolidays?: string[]
+  notes?: string
+}
 import { 
   getFacilityAvailability, 
   saveFacilityAvailability, 
