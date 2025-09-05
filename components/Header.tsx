@@ -54,7 +54,10 @@ export default function Header() {
                   )}
                 </span>
                 <button
-                  onClick={signOut}
+                  onClick={() => {
+                    console.log('Sign Out button clicked')
+                    signOut()
+                  }}
                   className="flex items-center space-x-1 text-gray-700 hover:text-primary-600 transition-colors"
                 >
                   <LogOut className="w-4 h-4" />
@@ -131,6 +134,7 @@ export default function Header() {
                     </span>
                     <button
                       onClick={() => {
+                        console.log('Mobile Sign Out button clicked')
                         signOut()
                         setIsMenuOpen(false)
                       }}

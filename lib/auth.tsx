@@ -44,8 +44,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        console.log('Auth state change:', event, session?.user?.id)
         setUser(session?.user ?? null)
-        
+
         if (session?.user) {
           await loadFacilityUser(session.user.id)
         } else {
@@ -131,7 +132,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   const signOut = async () => {
-    await supabase.auth.signOut()
+    console.log('SignOut called')
+    try {
+      const { error } = await supabase.auth.signOut()
+      if (error) {
+        console.error('SignOut error:', error)
+      } else {
+        console.log('SignOut successful')
+      }
+    } catch (error) {
+      console.error('SignOut exception:', error)
+    }
   }
 
   const refreshFacilityUser = async () => {
