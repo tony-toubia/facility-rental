@@ -32,26 +32,45 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    const checkInitialSession = async () => {
+      console.log('Checking initial session...')
+      const { data: { session }, error } = await supabase.auth.getSession()
+      console.log('Initial session result:', session?.user?.id || 'no session', error)
+
       setUser(session?.user ?? null)
       if (session?.user) {
-        loadFacilityUser(session.user.id)
+        await loadFacilityUser(session.user.id)
       } else {
         setLoading(false)
       }
-    })
+    }
+
+    checkInitialSession()
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        console.log('Auth state change:', event, session?.user?.id)
-        setUser(session?.user ?? null)
+        console.log('Auth state change:', event, session?.user?.id || 'no user')
 
-        if (session?.user) {
-          await loadFacilityUser(session.user.id)
-        } else {
+        if (event === 'SIGNED_OUT') {
+          console.log('User signed out, clearing facility user...')
           setFacilityUser(null)
+          setUser(null)
           setLoading(false)
+        } else if (event === 'SIGNED_IN' && session?.user) {
+          console.log('User signed in, loading facility user...')
+          setUser(session.user)
+          await loadFacilityUser(session.user.id)
+        } else if (event === 'TOKEN_REFRESHED') {
+          console.log('Token refreshed')
+          setUser(session?.user ?? null)
+        } else {
+          console.log('Other auth event:', event)
+          setUser(session?.user ?? null)
+          if (!session?.user) {
+            setFacilityUser(null)
+            setLoading(false)
+          }
         }
       }
     )
@@ -135,8 +154,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     console.log('SignOut called')
     try {
       console.log('Calling supabase.auth.signOut()...')
-      const { error } = await supabase.auth.signOut()
-      console.log('Supabase signOut response:', { error })
+
+      // Add a timeout to the signout call
+      const signOutPromise = supabase.auth.signOut()
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('SignOut timeout')), 10000)
+      )
+
+      const { data, error } = await Promise.race([signOutPromise, timeoutPromise]) as any
+
+      console.log('Supabase signOut response:', { data, error })
 
       if (error) {
         console.error('SignOut error:', error)
@@ -145,11 +172,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           status: error.status,
           name: error.name
         })
+
+        // Try alternative signout method
+        console.log('Trying alternative signout method...')
+        await supabase.auth.signOut({ scope: 'local' })
+        console.log('Alternative signout completed')
       } else {
-        console.log('SignOut successful')
-        // Force a page reload to ensure auth state is cleared
-        window.location.reload()
+        console.log('SignOut successful, data:', data)
       }
+
+      // Always reload the page to ensure auth state is cleared
+      console.log('Reloading page to clear auth state...')
+      window.location.reload()
+
     } catch (error: any) {
       console.error('SignOut exception:', error)
       console.error('Exception details:', {
@@ -157,6 +192,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         stack: error?.stack,
         name: error?.name
       })
+
+      // Even if signout fails, try to clear local state
+      console.log('Signout failed, but reloading page anyway...')
+      window.location.reload()
     }
   }
 
