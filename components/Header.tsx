@@ -7,7 +7,7 @@ import { useAuth } from '@/lib/auth'
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
-  const { user, facilityUser, loading, signOut, refreshFacilityUser } = useAuth()
+  const { user, signOut } = useAuth()
 
   return (
     <header className="bg-white shadow-sm border-b">
@@ -42,17 +42,7 @@ export default function Header() {
                   Dashboard
                 </Link>
                 <span className="text-gray-700">
-                  Welcome, {facilityUser?.first_name || user?.email?.split('@')[0] || 'User'}
-                  {/* Removed loading indicator for better UX */}
-                  {user && !facilityUser?.first_name && facilityUser && (
-                    <button
-                      onClick={refreshFacilityUser}
-                      className="ml-2 text-xs text-primary-600 hover:text-primary-700"
-                      title="Refresh user data"
-                    >
-                      🔄
-                    </button>
-                  )}
+                  Welcome, {user?.email?.split('@')[0] || 'User'}
                 </span>
                 <button
                   onClick={() => {
@@ -122,17 +112,7 @@ export default function Header() {
                       Dashboard
                     </Link>
                     <span className="text-gray-700">
-                      Welcome, {facilityUser?.first_name || user?.email?.split('@')[0] || 'User'}
-                      {/* Removed loading indicator for better UX */}
-                      {user && !facilityUser?.first_name && facilityUser && (
-                        <button
-                          onClick={refreshFacilityUser}
-                          className="ml-2 text-xs text-primary-600 hover:text-primary-700"
-                          title="Refresh user data"
-                        >
-                          🔄
-                        </button>
-                      )}
+                      Welcome, {user?.email?.split('@')[0] || 'User'}
                     </span>
                     <button
                       onClick={() => {

@@ -107,10 +107,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           currentUserRef.current = null
           setLoading(false)
         } else if (event === 'SIGNED_IN' && session?.user) {
-          console.log('User signed in, loading facility user...')
+          console.log('User signed in, checking if facility user reload needed...')
           setUser(session.user)
           currentUserRef.current = session.user
-          await loadFacilityUser(session.user.id)
+          // Always load facility user to ensure fresh state
+          loadFacilityUser(session.user.id)
         } else if (event === 'TOKEN_REFRESHED') {
           console.log('Token refreshed')
           // Only update user if it's actually different to prevent unnecessary re-renders
@@ -120,13 +121,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           }
         } else {
           console.log('Other auth event:', event)
-          // For INITIAL_SESSION, only set user if we don't already have one
+          // For INITIAL_SESSION, always process the session
           if (event === 'INITIAL_SESSION') {
-            if (!currentUserRef.current && session?.user) {
+            if (session?.user) {
               setUser(session.user)
               currentUserRef.current = session.user
-              await loadFacilityUser(session.user.id)
-            } else if (!session?.user) {
+              loadFacilityUser(session.user.id)
+            } else {
               setUser(null)
               currentUserRef.current = null
               setFacilityUser(null)
@@ -148,60 +149,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [])
 
   const loadFacilityUser = async (authUserId: string) => {
-    // Prevent duplicate loading for the same user
-    if (facilityUser && facilityUser.auth_user_id === authUserId) {
-      console.log('Auth: Facility user already loaded for this auth ID, skipping...')
-      setLoading(false) // Ensure loading is false
-      return
-    }
-
     try {
       console.log('Auth: Loading facility user for auth ID:', authUserId)
       
-      // Reduce timeout to 3 seconds to fail faster and not hang UI
-      const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Facility user loading timeout')), 3000)
-      )
-      
-      const loadPromise = getFacilityUserByAuthId(authUserId)
-      let facilityUser = await Promise.race([loadPromise, timeoutPromise]) as FacilityUser | null
-      
-      console.log('Auth: Facility user lookup result:', facilityUser)
+      const result = await getFacilityUserByAuthId(authUserId)
+      console.log('Auth: Facility user lookup result:', result)
 
-      // If no facility user exists, create one from auth user data
-      if (!facilityUser) {
-        console.log('Auth: No facility user found, attempting to create one...')
-        const { data: authUser, error: authError } = await supabase.auth.getUser()
-
-        if (authError) {
-          console.error('Auth: Error getting auth user:', authError)
-        } else if (authUser.user) {
-          const userData = authUser.user.user_metadata || {}
-
-          const newUserData = {
-            auth_user_id: authUserId,
-            first_name: userData.first_name || userData.firstName || 'User',
-            last_name: userData.last_name || userData.lastName || '',
-            email: authUser.user.email || '',
-            user_type: userData.user_type || userData.userType || 'renter',
-            city: userData.city || '',
-            state: userData.state || '',
-            zip_code: userData.zip_code || ''
-          }
-
-          console.log('Auth: Creating facility user with data:', newUserData)
-          facilityUser = await createFacilityUser(newUserData)
-          console.log('Auth: Facility user creation result:', facilityUser)
-        } else {
-          console.log('Auth: No auth user data available')
-        }
-      }
-
-      console.log('Auth: Setting facility user:', facilityUser)
-      setFacilityUser(facilityUser)
+      setFacilityUser(result)
     } catch (error) {
-      console.error('Auth: Error in loadFacilityUser:', error)
-      // Don't let facility user loading failure block the app
+      console.error('Auth: Error loading facility user:', error)
       setFacilityUser(null)
     } finally {
       setLoading(false)
@@ -304,42 +260,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const prefetchAdminData = async () => {
     console.log('Pre-fetching admin data...')
     
-    // Ensure we have the latest auth session
-    const { data: { session }, error: sessionError } = await supabase.auth.getSession()
-    if (sessionError) {
-      console.error('Error pre-fetching session:', sessionError)
+    // Only prefetch if we already have valid user data
+    if (!user || !facilityUser) {
+      console.log('No user data available for pre-fetch')
       return
     }
     
-    if (!session?.user) {
-      console.log('No valid session found during pre-fetch')
-      return
-    }
-    
-    // Make sure user state is set
-    if (!user || user.id !== session.user.id) {
-      console.log('Updating user state with latest session data')
-      setUser(session.user)
-      currentUserRef.current = session.user
-      
-      // Also refresh facility user if needed
-      if (!facilityUser || facilityUser.auth_user_id !== session.user.id) {
-        console.log('Refreshing facility user data')
-        await loadFacilityUser(session.user.id)
-      }
-    }
-    
-    // Pre-fetch pending facilities for admin page
+    // Pre-fetch pending facilities for admin page (without refreshing auth)
     try {
       console.log('Pre-fetching pending facilities...')
       
-      // First, refresh the auth token to ensure it's valid
-      const { error: refreshError } = await supabase.auth.refreshSession()
-      if (refreshError) {
-        console.error('Error refreshing auth token:', refreshError)
-      }
-      
-      // Then fetch some minimal data to warm up the connection
+      // Fetch some minimal data to warm up the connection
       await supabase
         .from('facility_facilities')
         .select(`
@@ -359,6 +290,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.log('Admin data pre-fetched successfully')
     } catch (err) {
       console.error('Error pre-fetching admin data:', err)
+      // Don't throw - this is just optimization
     }
   }
 
@@ -369,8 +301,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     signIn,
     signUp,
     signOut,
-    refreshFacilityUser,
-    prefetchAdminData
+    refreshFacilityUser
   }
 
   return (
