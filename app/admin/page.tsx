@@ -822,14 +822,14 @@ export default function AdminPage() {
                 </h2>
                 <button
                   onClick={loadPendingFacilities}
-                  disabled={reviewLoading}
+                  disabled={isLoading}
                   className="btn-secondary"
                 >
-                  {reviewLoading ? 'Loading...' : 'Refresh'}
+                  {isLoading ? 'Loading...' : 'Refresh'}
                 </button>
               </div>
 
-              {reviewLoading ? (
+              {isLoading ? (
                 <div className="text-center py-8">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mx-auto"></div>
                   <p className="mt-2 text-gray-600">Loading pending facilities...</p>
