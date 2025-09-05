@@ -317,22 +317,44 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
     
     // Make sure user state is set
-    if (!user) {
+    if (!user || user.id !== session.user.id) {
+      console.log('Updating user state with latest session data')
       setUser(session.user)
       currentUserRef.current = session.user
+      
+      // Also refresh facility user if needed
+      if (!facilityUser || facilityUser.auth_user_id !== session.user.id) {
+        console.log('Refreshing facility user data')
+        await loadFacilityUser(session.user.id)
+      }
     }
     
     // Pre-fetch pending facilities for admin page
     try {
       console.log('Pre-fetching pending facilities...')
+      
+      // First, refresh the auth token to ensure it's valid
+      const { error: refreshError } = await supabase.auth.refreshSession()
+      if (refreshError) {
+        console.error('Error refreshing auth token:', refreshError)
+      }
+      
+      // Then fetch some minimal data to warm up the connection
       await supabase
         .from('facility_facilities')
         .select(`
           id,
-          status
+          status,
+          name
         `)
         .in('status', ['pending_approval', 'needs_changes'])
-        .limit(1) // Just fetch minimal data to warm up the connection
+        .limit(5) // Fetch a few records to better warm up the connection
+      
+      // Also pre-fetch a small amount of review data
+      await supabase
+        .from('facility_reviews')
+        .select('id, facility_id, status')
+        .limit(5)
       
       console.log('Admin data pre-fetched successfully')
     } catch (err) {
