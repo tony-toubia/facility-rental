@@ -582,51 +582,13 @@ export default function BrowsePage() {
                   const features = facility.facility_features?.map(f => f.name) || []
                   const amenities = facility.facility_amenities?.map(a => a.name) || []
 
-                  // Generate multiple categories based on facility type and features
+                  // Only show the facility type as the category (most granular selection)
                   const categories = []
                   if (facility.type) {
                     categories.push(facility.type)
                   }
 
-                  // Debug: Log what we're working with
-                  console.log('Facility:', facility.id, 'Type:', facility.type)
-                  console.log('Features:', features)
-                  console.log('Amenities:', amenities)
-
-                  // Add categories based on features/amenities - more flexible matching
-                  const allFacilityText = [...features, ...amenities, facility.type || ''].join(' ').toLowerCase()
-
-                  if (allFacilityText.includes('swim') || allFacilityText.includes('pool')) {
-                    categories.push('Water Sports')
-                  }
-                  if (allFacilityText.includes('basketball') || allFacilityText.includes('team') || allFacilityText.includes('court')) {
-                    categories.push('Team Sports')
-                  }
-                  if (allFacilityText.includes('tennis') || allFacilityText.includes('racquet')) {
-                    categories.push('Racquet Sports')
-                  }
-                  if (allFacilityText.includes('fitness') || allFacilityText.includes('gym') || allFacilityText.includes('equipment')) {
-                    categories.push('Fitness')
-                  }
-                  if (allFacilityText.includes('yoga') || allFacilityText.includes('wellness') || allFacilityText.includes('meditation')) {
-                    categories.push('Wellness')
-                  }
-
-                  // Always add some variety for demo purposes
-                  if (categories.length === 1) {
-                    // Add complementary categories based on facility type
-                    if (facility.type?.toLowerCase().includes('conference') || facility.type?.toLowerCase().includes('meeting')) {
-                      categories.push('Business', 'Professional')
-                    } else if (facility.type?.toLowerCase().includes('studio')) {
-                      categories.push('Creative', 'Professional')
-                    } else if (facility.type?.toLowerCase().includes('hall') || facility.type?.toLowerCase().includes('event')) {
-                      categories.push('Events', 'Celebrations')
-                    }
-                  }
-
-                  // Remove duplicates
                   const uniqueCategories = Array.from(new Set(categories))
-                  console.log('Final categories for facility', facility.id, ':', uniqueCategories)
                   const allFeatures = [...features, ...amenities].slice(0, 3) // Show max 3 features
                   
                   return (

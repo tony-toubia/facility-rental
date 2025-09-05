@@ -271,69 +271,13 @@ export default function FacilityDetailPage({ params }: { params: { id: string } 
 
               {/* Categories */}
               <div className="mb-4">
-                {(() => {
-                  const categories = []
-                  if (facility.type) {
-                    categories.push(facility.type)
-                  }
-
-                  // Generate additional categories based on features
-                  const features = facility.facility_features?.map(f => f.name) || []
-                  const amenities = facility.facility_amenities?.map(a => a.name) || []
-                  const allFacilityText = [...features, ...amenities, facility.type || ''].join(' ').toLowerCase()
-
-                  if (allFacilityText.includes('swim') || allFacilityText.includes('pool')) {
-                    categories.push('Water Sports')
-                  }
-                  if (allFacilityText.includes('basketball') || allFacilityText.includes('team') || allFacilityText.includes('court')) {
-                    categories.push('Team Sports')
-                  }
-                  if (allFacilityText.includes('tennis') || allFacilityText.includes('racquet')) {
-                    categories.push('Racquet Sports')
-                  }
-                  if (allFacilityText.includes('fitness') || allFacilityText.includes('gym') || allFacilityText.includes('equipment')) {
-                    categories.push('Fitness')
-                  }
-                  if (allFacilityText.includes('yoga') || allFacilityText.includes('wellness') || allFacilityText.includes('meditation')) {
-                    categories.push('Wellness')
-                  }
-
-                  // Always add some variety for demo purposes
-                  if (categories.length === 1) {
-                    if (facility.type?.toLowerCase().includes('conference') || facility.type?.toLowerCase().includes('meeting')) {
-                      categories.push('Business', 'Professional')
-                    } else if (facility.type?.toLowerCase().includes('studio')) {
-                      categories.push('Creative', 'Professional')
-                    } else if (facility.type?.toLowerCase().includes('hall') || facility.type?.toLowerCase().includes('event')) {
-                      categories.push('Events', 'Celebrations')
-                    }
-                  }
-
-                  const uniqueCategories = Array.from(new Set(categories))
-
-                  return (
-                    <div className="flex items-center space-x-2 flex-wrap gap-2">
-                      {uniqueCategories.map((category, index) => (
-                        <span
-                          key={index}
-                          className={`text-sm px-3 py-1 rounded-full font-medium ${
-                            index === 0
-                              ? 'bg-primary-100 text-primary-700 border border-primary-200'
-                              : index === 1
-                              ? 'bg-blue-100 text-blue-700'
-                              : index === 2
-                              ? 'bg-green-100 text-green-700'
-                              : index === 3
-                              ? 'bg-purple-100 text-purple-700'
-                              : 'bg-orange-100 text-orange-700'
-                          }`}
-                        >
-                          {category}
-                        </span>
-                      ))}
-                    </div>
-                  )
-                })()}
+                {facility.type && (
+                  <div className="flex items-center space-x-2 flex-wrap gap-2">
+                    <span className="text-sm px-3 py-1 rounded-full bg-primary-100 text-primary-700 border border-primary-200 font-medium">
+                      {facility.type}
+                    </span>
+                  </div>
+                )}
               </div>
 
               {/* Status Indicator */}

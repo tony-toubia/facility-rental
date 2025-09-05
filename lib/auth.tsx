@@ -31,6 +31,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    // Check if we just signed out (from URL parameter)
+    const urlParams = new URLSearchParams(window.location.search)
+    const justSignedOut = urlParams.get('signed_out') === 'true'
+
+    if (justSignedOut) {
+      console.log('Detected signout from URL parameter, clearing state...')
+      setUser(null)
+      setFacilityUser(null)
+      setLoading(false)
+      // Clean up the URL
+      const newUrl = window.location.pathname
+      window.history.replaceState({}, document.title, newUrl)
+      return
+    }
+
     // Get initial session
     const checkInitialSession = async () => {
       console.log('Checking initial session...')
@@ -151,52 +166,33 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   const signOut = async () => {
-    console.log('SignOut called')
-    try {
-      console.log('Calling supabase.auth.signOut()...')
+    console.log('SignOut called - starting immediate signout process')
 
-      // Add a timeout to the signout call
+    // Immediately clear local state first
+    console.log('Clearing local auth state...')
+    setUser(null)
+    setFacilityUser(null)
+    setLoading(false)
+
+    try {
+      console.log('Attempting Supabase signout...')
+
+      // Try signout with a short timeout
       const signOutPromise = supabase.auth.signOut()
       const timeoutPromise = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error('SignOut timeout')), 10000)
+        setTimeout(() => reject(new Error('SignOut timeout')), 3000)
       )
 
-      const { data, error } = await Promise.race([signOutPromise, timeoutPromise]) as any
-
-      console.log('Supabase signOut response:', { data, error })
-
-      if (error) {
-        console.error('SignOut error:', error)
-        console.error('Error details:', {
-          message: error.message,
-          status: error.status,
-          name: error.name
-        })
-
-        // Try alternative signout method
-        console.log('Trying alternative signout method...')
-        await supabase.auth.signOut({ scope: 'local' })
-        console.log('Alternative signout completed')
-      } else {
-        console.log('SignOut successful, data:', data)
-      }
-
-      // Always reload the page to ensure auth state is cleared
-      console.log('Reloading page to clear auth state...')
-      window.location.reload()
+      const result = await Promise.race([signOutPromise, timeoutPromise])
+      console.log('Supabase signOut result:', result)
 
     } catch (error: any) {
-      console.error('SignOut exception:', error)
-      console.error('Exception details:', {
-        message: error?.message,
-        stack: error?.stack,
-        name: error?.name
-      })
-
-      // Even if signout fails, try to clear local state
-      console.log('Signout failed, but reloading page anyway...')
-      window.location.reload()
+      console.log('Signout attempt failed, but continuing with local cleanup:', error?.message)
     }
+
+    // Always reload the page immediately after attempting signout
+    console.log('Signout process complete, reloading page...')
+    window.location.href = window.location.pathname + '?signed_out=true&t=' + Date.now()
   }
 
   const refreshFacilityUser = async () => {
