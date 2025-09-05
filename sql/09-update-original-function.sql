@@ -89,7 +89,7 @@ BEGIN
         LIMIT 1
     ) as primary_category
   FROM facility_facilities f
-  WHERE f.status = 'active'
+  WHERE f.status IN ('active', 'approved')
   AND f.latitude IS NOT NULL 
   AND f.longitude IS NOT NULL
   AND ST_DWithin(

@@ -1,0 +1,11 @@
+id,name,city,state,latitude,longitude,status,is_active,distance_miles
+c85e7df6-0f71-4979-a238-4c4d221c8f83,Chicken,Fairway,KS,39.02500000,-94.62600000,approved,true,0.892065514735574
+2a5c359b-4631-47b3-9af1-953096571965,a new gym,Fairway,KS,39.02400000,-94.62500000,approved,true,0.892661921174588
+25a7e2b9-951f-4c47-ab5c-5f82e3776dc4,Highlands Elementary Gym,Fairway,KS,39.02670000,-94.62750000,approved,true,0.931581662513609
+6f3e62c3-4c28-47b5-8735-1d47d7651f73,Chicken Gym,Fairway,KS,39.02800000,-94.62900000,approved,true,0.972186841112785
+453280e4-0399-4337-861b-bad4ed73c9f4,this is new,Fairway,KS,39.02900000,-94.63000000,approved,true,1.02263947770773
+54a45ad9-7902-421d-abd3-573db457e02f,Heritage Facility,Kansas City,KS,39.03097516,-94.66366496,approved,true,2.2342547952122
+f4e66fdd-9bbf-471f-833a-69d363f43875,Oakwood Institute,Kansas City,MO,39.05091697,-94.65096251,approved,true,3.08142732536142
+d964b8ed-613d-402a-a6ef-4376d94e2422,Willow Park,Overland Park,KS,39.04656677,-94.69123864,approved,true,4.5871613112898
+17225916-d5e5-4627-b99a-b22fb3b072e7,Oakwood Complex,Kansas City,KS,39.05753389,-94.52559711,approved,true,8.37579797056651
+ffe09649-d2e7-4616-bb45-04925128fa64,Fitness Fields,Kansas City,MO,38.97202858,-94.74987277,approved,true,8.91044588878542

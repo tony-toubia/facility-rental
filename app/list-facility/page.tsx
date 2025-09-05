@@ -1,10 +1,13 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
-import { Upload, MapPin, DollarSign, Clock, Plus, X } from 'lucide-react'
+import { Upload, MapPin, DollarSign, Clock, X } from 'lucide-react'
 import { useAuth } from '@/lib/auth'
-import { createFacility, uploadFacilityImage, createFacilityAmenities, createFacilityFeatures } from '@/lib/database'
+import { createFacility, uploadFacilityImage, createFacilityAmenities, createFacilityFeatures, createFacilityCategoryAssignments } from '@/lib/database'
+import { saveFacilityAvailability } from '@/lib/availability-database'
+import CategoryButtonSelector from '@/components/CategoryButtonSelector'
+import AvailabilityConfigurator, { AvailabilityConfig } from '@/components/AvailabilityConfigurator'
 
 export default function ListFacilityPage() {
   const router = useRouter()
@@ -12,7 +15,7 @@ export default function ListFacilityPage() {
   
   const [formData, setFormData] = useState({
     name: '',
-    type: '',
+    categories: [] as string[],
     description: '',
     address: '',
     city: '',
@@ -23,30 +26,46 @@ export default function ListFacilityPage() {
     capacity: '',
     amenities: [] as string[],
     features: [] as string[],
-    images: [] as File[]
+    images: [] as File[],
+    availability: null as AvailabilityConfig | null
   })
 
-  const [newAmenity, setNewAmenity] = useState('')
-  const [newFeature, setNewFeature] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
 
-  const facilityTypes = [
-    'Gym & Fitness',
-    'Swimming Pool',
-    'Basketball Court',
-    'Tennis Court',
-    'Soccer Field',
-    'Baseball Field',
-    'Volleyball Court',
-    'Dance Studio',
-    'Yoga Studio',
-    'Event Space',
-    'Meeting Room',
-    'Other'
-  ]
+  // Form validation
+  const isFormValid = () => {
+    return (
+      formData.name.trim() !== '' &&
+      formData.categories.length > 0 &&
+      formData.description.trim() !== '' &&
+      formData.address.trim() !== '' &&
+      formData.city.trim() !== '' &&
+      formData.state.trim() !== '' &&
+      formData.zipCode.trim() !== '' &&
+      formData.price.trim() !== '' &&
+      formData.capacity.trim() !== '' &&
+      formData.availability !== null &&
+      user &&
+      facilityUser
+    )
+  }
 
-  const commonAmenities = [
+  const handleCategoriesChange = useCallback((categories: string[]) => {
+    setFormData(prev => ({
+      ...prev,
+      categories
+    }))
+  }, [])
+
+  const handleAvailabilityChange = useCallback((availability: AvailabilityConfig) => {
+    setFormData(prev => ({
+      ...prev,
+      availability
+    }))
+  }, [])
+
+  const predefinedAmenities = [
     'Free WiFi',
     'Parking Available',
     'Air Conditioning',
@@ -56,7 +75,54 @@ export default function ListFacilityPage() {
     'Sound System',
     'Security System',
     'Equipment Rental',
-    'Refreshments'
+    'Refreshments',
+    'Towel Service',
+    'Water Fountains',
+    'First Aid Kit',
+    'Wheelchair Accessible',
+    'Restrooms',
+    'Vending Machines',
+    'Reception/Front Desk',
+    'Storage Space',
+    'Cleaning Service',
+    'Equipment Storage',
+    'Lighting Control',
+    'Temperature Control',
+    'Mirrors',
+    'Seating Area',
+    'Waiting Area'
+  ]
+
+  const predefinedFeatures = [
+    'Professional Lighting',
+    'Rubber Flooring',
+    'Hardwood Floors',
+    'High Ceilings',
+    'Natural Light',
+    'Sprung Floors',
+    'Mirrored Walls',
+    'Ballet Barres',
+    'Yoga Props Available',
+    'Meditation Space',
+    'Outdoor Access',
+    'Pool Access',
+    'Sauna',
+    'Steam Room',
+    'Hot Tub',
+    'Massage Room',
+    'Recovery Area',
+    'Cardio Equipment',
+    'Weight Equipment',
+    'Functional Training Area',
+    'Group Exercise Space',
+    'Private Training Room',
+    'Competition Standard',
+    'Spectator Seating',
+    'Scoreboard',
+    'Professional Grade Equipment',
+    'Adjustable Equipment',
+    'Multiple Courts/Fields',
+    'Indoor/Outdoor Option'
   ]
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -82,39 +148,23 @@ export default function ListFacilityPage() {
     }))
   }
 
-  const addAmenity = () => {
-    if (newAmenity.trim() && !formData.amenities.includes(newAmenity.trim())) {
-      setFormData(prev => ({
-        ...prev,
-        amenities: [...prev.amenities, newAmenity.trim()]
-      }))
-      setNewAmenity('')
-    }
-  }
-
-  const removeAmenity = (amenity: string) => {
+  const handleAmenityToggle = useCallback((amenity: string) => {
     setFormData(prev => ({
       ...prev,
-      amenities: prev.amenities.filter(a => a !== amenity)
+      amenities: prev.amenities.includes(amenity)
+        ? prev.amenities.filter(a => a !== amenity)
+        : [...prev.amenities, amenity]
     }))
-  }
+  }, [])
 
-  const addFeature = () => {
-    if (newFeature.trim() && !formData.features.includes(newFeature.trim())) {
-      setFormData(prev => ({
-        ...prev,
-        features: [...prev.features, newFeature.trim()]
-      }))
-      setNewFeature('')
-    }
-  }
-
-  const removeFeature = (feature: string) => {
+  const handleFeatureToggle = useCallback((feature: string) => {
     setFormData(prev => ({
       ...prev,
-      features: prev.features.filter(f => f !== feature)
+      features: prev.features.includes(feature)
+        ? prev.features.filter(f => f !== feature)
+        : [...prev.features, feature]
     }))
-  }
+  }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -126,14 +176,20 @@ export default function ListFacilityPage() {
       return
     }
 
+    // Validate categories
+    if (formData.categories.length === 0) {
+      setError('Please select at least one category for your facility.')
+      return
+    }
+
     setIsLoading(true)
     
     try {
       // Create the facility record
       const facilityData = {
-        owner_id: facilityUser?.id || user?.id || '', // Use facilityUser.id as owner_id
+        owner_id: facilityUser?.id || '', // Use facilityUser.id to satisfy foreign key constraint
         name: formData.name,
-        type: formData.type,
+        type: formData.categories[0], // Use primary category as type for backward compatibility
         description: formData.description,
         address: formData.address,
         city: formData.city,
@@ -176,6 +232,16 @@ export default function ListFacilityPage() {
       if (formData.features.length > 0) {
         await createFacilityFeatures(facility.id, formData.features)
       }
+
+      // Create category assignments
+      if (formData.categories.length > 0) {
+        await createFacilityCategoryAssignments(facility.id, formData.categories)
+      }
+
+      // Save availability configuration
+      if (formData.availability) {
+        await saveFacilityAvailability(facility.id, formData.availability)
+      }
       
       alert('Facility listing submitted successfully! It will be reviewed before going live.')
       router.push('/') // Redirect to home page
@@ -217,7 +283,7 @@ export default function ListFacilityPage() {
             {/* Basic Information */}
             <div>
               <h2 className="text-xl font-semibold text-gray-900 mb-4">Basic Information</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-6">
                 <div>
                   <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
                     Facility Name *
@@ -235,25 +301,22 @@ export default function ListFacilityPage() {
                 </div>
 
                 <div>
-                  <label htmlFor="type" className="block text-sm font-medium text-gray-700 mb-2">
-                    Facility Type *
+                  <label className="block text-sm font-medium text-gray-700 mb-4">
+                    Facility Categories *
                   </label>
-                  <select
-                    id="type"
-                    name="type"
-                    value={formData.type}
-                    onChange={handleInputChange}
-                    required
-                    className="input-field"
-                  >
-                    <option value="">Select a type</option>
-                    {facilityTypes.map(type => (
-                      <option key={type} value={type}>{type}</option>
-                    ))}
-                  </select>
+                  <CategoryButtonSelector
+                    selectedCategories={formData.categories}
+                    onCategoriesChange={handleCategoriesChange}
+                    maxSelections={10}
+                    allowMultiple={true}
+                    className="w-full"
+                  />
+                  <p className="text-xs text-gray-500 mt-2">
+                    The first category selected will be used as the primary type for your facility.
+                  </p>
                 </div>
 
-                <div className="md:col-span-2">
+                <div>
                   <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-2">
                     Description *
                   </label>
@@ -458,110 +521,82 @@ export default function ListFacilityPage() {
             {/* Amenities */}
             <div>
               <h2 className="text-xl font-semibold text-gray-900 mb-4">Amenities</h2>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-4">
-                {commonAmenities.map(amenity => (
+              <p className="text-sm text-gray-600 mb-4">Select all amenities available at your facility:</p>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                {predefinedAmenities.map(amenity => (
                   <label key={amenity} className="flex items-center">
                     <input
                       type="checkbox"
                       checked={formData.amenities.includes(amenity)}
-                      onChange={(e) => {
-                        if (e.target.checked) {
-                          setFormData(prev => ({
-                            ...prev,
-                            amenities: [...prev.amenities, amenity]
-                          }))
-                        } else {
-                          removeAmenity(amenity)
-                        }
-                      }}
+                      onChange={() => handleAmenityToggle(amenity)}
                       className="text-primary-600 focus:ring-primary-500"
                     />
                     <span className="ml-2 text-sm text-gray-700">{amenity}</span>
                   </label>
                 ))}
               </div>
-
-              <div className="flex space-x-2">
-                <input
-                  type="text"
-                  value={newAmenity}
-                  onChange={(e) => setNewAmenity(e.target.value)}
-                  placeholder="Add custom amenity"
-                  className="input-field flex-1"
-                  onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addAmenity())}
-                />
-                <button
-                  type="button"
-                  onClick={addAmenity}
-                  className="btn-secondary flex items-center space-x-1"
-                >
-                  <Plus className="w-4 h-4" />
-                  <span>Add</span>
-                </button>
-              </div>
-
-              {formData.amenities.length > 0 && (
-                <div className="mt-4 flex flex-wrap gap-2">
-                  {formData.amenities.map(amenity => (
-                    <span
-                      key={amenity}
-                      className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-primary-100 text-primary-800"
-                    >
-                      {amenity}
-                      <button
-                        type="button"
-                        onClick={() => removeAmenity(amenity)}
-                        className="ml-2 text-primary-600 hover:text-primary-800"
-                      >
-                        <X className="w-3 h-3" />
-                      </button>
-                    </span>
-                  ))}
-                </div>
-              )}
             </div>
 
             {/* Features */}
             <div>
               <h2 className="text-xl font-semibold text-gray-900 mb-4">Special Features</h2>
-              <div className="flex space-x-2 mb-4">
-                <input
-                  type="text"
-                  value={newFeature}
-                  onChange={(e) => setNewFeature(e.target.value)}
-                  placeholder="e.g., Professional lighting, Rubber flooring"
-                  className="input-field flex-1"
-                  onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addFeature())}
-                />
-                <button
-                  type="button"
-                  onClick={addFeature}
-                  className="btn-secondary flex items-center space-x-1"
-                >
-                  <Plus className="w-4 h-4" />
-                  <span>Add</span>
-                </button>
+              <p className="text-sm text-gray-600 mb-4">Select any special features that make your facility unique:</p>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                {predefinedFeatures.map(feature => (
+                  <label key={feature} className="flex items-center">
+                    <input
+                      type="checkbox"
+                      checked={formData.features.includes(feature)}
+                      onChange={() => handleFeatureToggle(feature)}
+                      className="text-primary-600 focus:ring-primary-500"
+                    />
+                    <span className="ml-2 text-sm text-gray-700">{feature}</span>
+                  </label>
+                ))}
               </div>
+            </div>
 
-              {formData.features.length > 0 && (
-                <div className="flex flex-wrap gap-2">
-                  {formData.features.map(feature => (
-                    <span
-                      key={feature}
-                      className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-gray-100 text-gray-800"
-                    >
-                      {feature}
-                      <button
-                        type="button"
-                        onClick={() => removeFeature(feature)}
-                        className="ml-2 text-gray-600 hover:text-gray-800"
-                      >
-                        <X className="w-3 h-3" />
-                      </button>
-                    </span>
-                  ))}
+            {/* Availability Configuration */}
+            <div>
+              <h2 className="text-xl font-semibold text-gray-900 mb-4">Availability & Scheduling</h2>
+              <p className="text-sm text-gray-600 mb-6">
+                Configure when your facility is available for booking. This helps potential renters know when they can use your space.
+              </p>
+              <AvailabilityConfigurator
+                onAvailabilityChange={handleAvailabilityChange}
+                initialConfig={formData.availability || undefined}
+                facilityCity={formData.city}
+                facilityState={formData.state}
+              />
+            </div>
+
+            {/* Terms and Conditions */}
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
+              <h3 className="text-lg font-semibold text-blue-900 mb-3">Before You Submit</h3>
+              <div className="space-y-3 text-sm text-blue-800">
+                <div className="flex items-start">
+                  <div className="flex-shrink-0 w-2 h-2 bg-blue-600 rounded-full mt-2 mr-3"></div>
+                  <p>Your listing will be reviewed by our team within <strong>24-48 hours</strong></p>
                 </div>
-              )}
+                <div className="flex items-start">
+                  <div className="flex-shrink-0 w-2 h-2 bg-blue-600 rounded-full mt-2 mr-3"></div>
+                  <p>Once approved, your facility will be <strong>immediately visible</strong> to potential renters</p>
+                </div>
+                <div className="flex items-start">
+                  <div className="flex-shrink-0 w-2 h-2 bg-blue-600 rounded-full mt-2 mr-3"></div>
+                  <p>If changes are needed, you&apos;ll receive detailed feedback and can resubmit</p>
+                </div>
+                <div className="flex items-start">
+                  <div className="flex-shrink-0 w-2 h-2 bg-blue-600 rounded-full mt-2 mr-3"></div>
+                  <p>By submitting, you agree to our <a href="/terms" className="underline hover:text-blue-600">Terms of Service</a> and <a href="/privacy" className="underline hover:text-blue-600">Privacy Policy</a></p>
+                </div>
+              </div>
+              
+              <div className="mt-4 p-3 bg-blue-100 rounded-md">
+                <p className="text-sm text-blue-800">
+                  <strong>Tip:</strong> Make sure all information is accurate and complete. High-quality photos and detailed descriptions help your facility get approved faster and attract more bookings!
+                </p>
+              </div>
             </div>
 
             {/* Submit Button */}
@@ -577,14 +612,18 @@ export default function ListFacilityPage() {
                 <button 
                   type="submit" 
                   className="btn-primary px-8 py-3 disabled:opacity-50 disabled:cursor-not-allowed"
-                  disabled={isLoading || !user || !facilityUser}
+                  disabled={isLoading || !isFormValid()}
                 >
                   {isLoading ? 'Submitting...' : 'Submit for Review'}
                 </button>
               </div>
-              {(!user || !facilityUser) && (
+              {!user || !facilityUser ? (
                 <p className="text-sm text-gray-500 text-right mt-2">
                   Please log in to submit your facility listing
+                </p>
+              ) : !isFormValid() && (
+                <p className="text-sm text-gray-500 text-right mt-2">
+                  Please fill in all required fields to submit
                 </p>
               )}
             </div>

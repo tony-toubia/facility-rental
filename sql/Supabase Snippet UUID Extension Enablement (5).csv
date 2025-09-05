@@ -1,0 +1,6 @@
+grantee,privilege_type
+PUBLIC,EXECUTE
+postgres,EXECUTE
+anon,EXECUTE
+authenticated,EXECUTE
+service_role,EXECUTE

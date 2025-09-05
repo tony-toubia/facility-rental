@@ -115,7 +115,8 @@ async function getFacilitiesWithinRadiusFallback(
         name
       )
     `)
-    .eq('status', 'active')
+    .eq('status', 'approved')
+    .eq('is_active', true)
     .gte('latitude', centerLat - radiusDegrees)
     .lte('latitude', centerLat + radiusDegrees)
     .gte('longitude', centerLng - radiusDegrees)

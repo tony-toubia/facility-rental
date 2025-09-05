@@ -1,0 +1,295 @@
+id,name,status,is_active,city,state,created_at
+b3aa10d7-a14b-4ff7-879c-2d566158e37e,New Fitness Center,approved,true,Fairway,KS,2025-09-03 17:54:06.157312+00
+78d8e66a-5f7a-45fb-80e4-b75d1c1e48e6,Wichita Institute,approved,true,Wichita,KS,2025-08-30 04:45:41.081934+00
+b081851a-2aa8-43d4-a490-2ad09ed3aaeb,Central Arena,approved,true,Wichita,KS,2025-08-30 04:45:41.081934+00
+d93db7b3-9e96-41b4-91aa-296a704c984e,Athletic Fields,approved,true,Wichita,KS,2025-08-30 04:45:41.081934+00
+e9e051d1-17a3-423e-9cad-91bda5c3620e,Metro Hub,approved,true,Wichita,KS,2025-08-30 04:45:41.081934+00
+fad4f9e2-db88-4aac-b80b-05c3464e4ebc,Heritage Zone,approved,true,Wichita,KS,2025-08-30 04:45:41.081934+00
+2e03044f-114e-49b6-a00a-ce257168bfbf,Pine Facility,approved,true,Wichita,KS,2025-08-30 04:45:41.081934+00
+d964b8ed-613d-402a-a6ef-4376d94e2422,Willow Park,approved,true,Overland Park,KS,2025-08-30 04:45:41.081934+00
+dfbb8c66-765d-493c-ab9c-32524235fb59,Sunset Courts,approved,true,Overland Park,KS,2025-08-30 04:45:41.081934+00
+d9ae24ff-ba49-4158-8551-a0c400f911be,Riverside Park,approved,true,Overland Park,KS,2025-08-30 04:45:41.081934+00
+6fc525a9-be37-4752-9db9-44d5ce2375a9,Overland Park Complex,approved,true,Overland Park,KS,2025-08-30 04:45:41.081934+00
+49372f2f-0549-4521-ab82-0fb19fa69b3b,Overland Park Club,approved,true,Overland Park,KS,2025-08-30 04:45:41.081934+00
+858109e8-5b0d-4a2b-9b4f-e73b076a771d,Kansas City Park,approved,true,Kansas City,KS,2025-08-30 04:45:41.081934+00
+9a5fa77a-22d9-4822-8974-25a16baff2ec,Maple Institute,approved,true,Kansas City,KS,2025-08-30 04:45:41.081934+00
+17225916-d5e5-4627-b99a-b22fb3b072e7,Oakwood Complex,approved,true,Kansas City,KS,2025-08-30 04:45:41.081934+00
+54a45ad9-7902-421d-abd3-573db457e02f,Heritage Facility,approved,true,Kansas City,KS,2025-08-30 04:45:41.081934+00
+9053cbba-5e2e-44d5-a8b6-ef8fd78a358f,Sunset Institute,approved,true,Kansas City,KS,2025-08-30 04:45:41.081934+00
+ef33717f-0b94-4c22-86d4-db2bf78d92ba,Premier Complex,approved,true,Kansas City,KS,2025-08-30 04:45:41.081934+00
+4d34bfce-8129-4e22-88fb-aec5e0358a7c,Sunset Courts,approved,true,Topeka,KS,2025-08-30 04:45:41.081934+00
+0f6f42c5-003e-4e20-90ca-3548a4818aa8,Pine Arena,approved,true,Topeka,KS,2025-08-30 04:45:41.081934+00
+e2e5ba15-7417-4984-a446-08042a1cb0f3,Maple Park,approved,true,Topeka,KS,2025-08-30 04:45:41.081934+00
+d767a910-b2fd-4e45-abca-56b8d78491e3,Victory Courts,approved,true,Topeka,KS,2025-08-30 04:45:41.081934+00
+853546de-581a-40fa-b47b-28374609392f,Fitness Facility,approved,true,Topeka,KS,2025-08-30 04:45:41.081934+00
+8da763a0-df45-4cc1-9f97-3398b02f76a8,Champions Place,approved,true,Fargo,ND,2025-08-30 04:45:41.081934+00
+492a396a-62d0-4de6-a6ab-b2e15eced103,Recreation Complex,approved,true,Fargo,ND,2025-08-30 04:45:41.081934+00
+f1e27a6c-2a7b-4555-b09e-dee4b3ffade6,Heritage Complex,approved,true,Fargo,ND,2025-08-30 04:45:41.081934+00
+e86d7f65-3e5a-47fb-8a0b-094242f833a9,Sunset Place,approved,true,Fargo,ND,2025-08-30 04:45:41.081934+00
+b24aafb9-2930-4e25-9b96-2270ced01efb,Athletic Academy,approved,true,Bismarck,ND,2025-08-30 04:45:41.081934+00
+864cc9b2-03d3-4744-a5db-835b125c6e22,Elite Center,approved,true,Bismarck,ND,2025-08-30 04:45:41.081934+00
+51e8bb99-1954-4cfe-a07c-1554d5298a06,Heritage Park,approved,true,Bismarck,ND,2025-08-30 04:45:41.081934+00
+435399ef-0a55-489f-9bf6-3101de4e2e9b,Bismarck Institute,approved,true,Bismarck,ND,2025-08-30 04:45:41.081934+00
+21bda185-0698-4ce2-9e55-c29d04e06375,Athletic Zone,approved,true,Sioux Falls,SD,2025-08-30 04:45:41.081934+00
+02b82283-7c8d-476e-865b-671834385dfd,Riverside Courts,approved,true,Sioux Falls,SD,2025-08-30 04:45:41.081934+00
+48f9ac00-38e4-41f6-8a67-0237f9681c17,Cedar Zone,approved,true,Sioux Falls,SD,2025-08-30 04:45:41.081934+00
+bac2d707-64a1-42dd-86dd-6c1df6b2e369,Cedar Hub,approved,true,Sioux Falls,SD,2025-08-30 04:45:41.081934+00
+d328a6ea-0e7d-4e72-802d-9714f5f0097a,Riverside Park,approved,true,Rapid City,SD,2025-08-30 04:45:41.081934+00
+e58c48ff-8f63-4600-8707-50d9d92a68a0,Riverside Fields,approved,true,Rapid City,SD,2025-08-30 04:45:41.081934+00
+8447252a-ad90-4f34-96bc-f6c5ff3d76e1,Oakwood Courts,approved,true,Rapid City,SD,2025-08-30 04:45:41.081934+00
+7cf9f211-ec3b-4502-a8a9-14ec3a876220,Recreation Facility,approved,true,Rapid City,SD,2025-08-30 04:45:41.081934+00
+b4738ed4-0516-4385-9a12-10019b11df9d,Athletic Club,approved,true,Sioux City,IA,2025-08-30 04:45:40.998493+00
+03e652e9-32f6-4d93-90a9-8dd7bc22d068,Victory Academy,approved,true,Iowa City,IA,2025-08-30 04:45:40.998493+00
+bb4ed3be-560c-4c7c-a433-c11fe29f49a4,Community Club,approved,true,Iowa City,IA,2025-08-30 04:45:40.998493+00
+22df8aba-9669-44e5-b289-92fd8ca2763c,Elite Complex,approved,true,Iowa City,IA,2025-08-30 04:45:40.998493+00
+dc4db176-6a48-4aa0-a729-1931ce3eaf2f,Heritage Arena,approved,true,Kansas City,MO,2025-08-30 04:45:40.998493+00
+8488642d-6a27-4eba-9486-cc4c2af93115,Pine Complex,approved,true,Kansas City,MO,2025-08-30 04:45:40.998493+00
+ffe09649-d2e7-4616-bb45-04925128fa64,Fitness Fields,approved,true,Kansas City,MO,2025-08-30 04:45:40.998493+00
+fc70f2c4-6e63-49aa-97a3-dc4c039ff87f,Fitness Zone,approved,true,Kansas City,MO,2025-08-30 04:45:40.998493+00
+f4e66fdd-9bbf-471f-833a-69d363f43875,Oakwood Institute,approved,true,Kansas City,MO,2025-08-30 04:45:40.998493+00
+dacea8dd-af8e-4e75-aa80-c3620514be6a,Victory Complex,approved,true,Saint Louis,MO,2025-08-30 04:45:40.998493+00
+9e54fa83-f31c-40a2-9403-a3540f99ee33,Athletic Club,approved,true,Saint Louis,MO,2025-08-30 04:45:40.998493+00
+d9305965-66c0-49fc-aa2c-c2d4cd1496c5,Athletic Complex,approved,true,Saint Louis,MO,2025-08-30 04:45:40.998493+00
+32b99330-dd87-4bb5-a19e-7e44427b3bba,Elite Hub,approved,true,Saint Louis,MO,2025-08-30 04:45:40.998493+00
+8af28cac-6a76-4670-a22c-2873732796c5,Oakwood Hub,approved,true,Saint Louis,MO,2025-08-30 04:45:40.998493+00
+100f7135-9ded-4944-ac08-5975c77f5517,Sunset Place,approved,true,Saint Louis,MO,2025-08-30 04:45:40.998493+00
+a48ed894-1d0a-403b-b427-933618a0ecd5,Oakwood Facility,approved,true,Saint Louis,MO,2025-08-30 04:45:40.998493+00
+fe1072e8-cb23-4d28-888a-6d75d77d73f9,Elite Arena,approved,true,Saint Louis,MO,2025-08-30 04:45:40.998493+00
+df90a688-ede9-4d9d-9c58-793bbc174bf4,Cedar Complex,approved,true,Springfield,MO,2025-08-30 04:45:40.998493+00
+e18471e0-d7d8-41f8-8325-0ca134000c4b,Community Academy,approved,true,Springfield,MO,2025-08-30 04:45:40.998493+00
+81c0fff8-2c4a-4eab-a375-3abe3e4d5257,Springfield Zone,approved,true,Springfield,MO,2025-08-30 04:45:40.998493+00
+60423a37-d72d-4abc-bf4f-16efe37d84e6,Maple Arena,approved,true,Columbia,MO,2025-08-30 04:45:40.998493+00
+57790f8d-c8c6-4f22-92a3-dbffe9d734f2,Elite Zone,approved,true,Columbia,MO,2025-08-30 04:45:40.998493+00
+7a7f1c7a-e1f0-4241-a573-ee3e9b236b62,Victory Park,approved,true,Columbia,MO,2025-08-30 04:45:40.998493+00
+b82dbcbe-baae-4691-a4c6-d322051bff5d,Central Hub,approved,true,Columbia,MO,2025-08-30 04:45:40.998493+00
+8787d90e-6613-4b1a-91f8-ab1e8e2cdb42,Sunset Zone,approved,true,Columbia,MO,2025-08-30 04:45:40.998493+00
+be8c2c0d-ad4e-49d0-9ab8-e073e156964a,Sunset Fields,approved,true,Columbia,MO,2025-08-30 04:45:40.998493+00
+3fa4cb26-234b-45f1-b26e-dbef9741477b,Heritage Arena,approved,true,Columbia,MO,2025-08-30 04:45:40.998493+00
+1b2fc818-d0a3-4eef-91f3-9c618805c2a5,Sunset Park,approved,true,Independence,MO,2025-08-30 04:45:40.998493+00
+282079d0-fd51-4b51-9893-42e4fb0fbabb,Riverside Fields,approved,true,Independence,MO,2025-08-30 04:45:40.998493+00
+ad952228-0830-4d2f-93e1-8f4c4a1dec68,Community Complex,approved,true,Independence,MO,2025-08-30 04:45:40.998493+00
+9e9c03f0-985f-48f4-b133-4247a226a432,Independence Arena,approved,true,Independence,MO,2025-08-30 04:45:40.998493+00
+e561b7d8-0b41-4060-a773-0e472d271399,Premier Zone,approved,true,Independence,MO,2025-08-30 04:45:40.998493+00
+23ab9073-41d4-484a-9ffd-ffd604c36adf,Willow Place,approved,true,Independence,MO,2025-08-30 04:45:40.998493+00
+56327491-feb8-4225-837e-6129efa431f6,Sunset Club,approved,true,Independence,MO,2025-08-30 04:45:40.998493+00
+49eaa725-a27c-4463-9c4d-bb6faf4deaee,Victory Institute,approved,true,Independence,MO,2025-08-30 04:45:40.998493+00
+f07f58ba-50ad-48d8-9570-a262172f950f,Oakwood Facility,approved,true,Omaha,NE,2025-08-30 04:45:40.998493+00
+cb87d4a1-acd2-41b8-8a09-9e756736ec66,Sunset Facility,approved,true,Omaha,NE,2025-08-30 04:45:40.998493+00
+e448780f-590d-4e66-9646-fcb43659f7bc,Cedar Courts,approved,true,Omaha,NE,2025-08-30 04:45:40.998493+00
+9958d816-d847-41f4-8f44-6bf2f2958f69,Fitness Hub,approved,true,Omaha,NE,2025-08-30 04:45:40.998493+00
+ff25a988-797c-42bf-acab-40590c977d0d,Heritage Hub,approved,true,Lincoln,NE,2025-08-30 04:45:40.998493+00
+a4e4b950-ec2e-4da3-a6ac-92b13f8443db,Cedar Park,approved,true,Lincoln,NE,2025-08-30 04:45:40.998493+00
+a432136f-7eb5-42ef-afed-0c39aab125c5,Maple Zone,approved,true,Lincoln,NE,2025-08-30 04:45:40.998493+00
+2d66fcbc-59c8-4e87-9bcf-fa39762b2d6d,Metro Club,approved,true,Lincoln,NE,2025-08-30 04:45:40.998493+00
+7d15fabe-ab17-4557-898b-6b82b0d82a4e,Recreation Complex,approved,true,Lincoln,NE,2025-08-30 04:45:40.998493+00
+dd4b388d-c426-4da4-963d-5f9e7b8b6884,Riverside Park,approved,true,Bellevue,NE,2025-08-30 04:45:40.998493+00
+efb72974-ec52-4942-9408-4f952f23b9a8,Riverside Arena,approved,true,Bellevue,NE,2025-08-30 04:45:40.998493+00
+0f0445b3-5769-43d1-83d7-1039b09b78bb,Athletic Park,approved,true,Bellevue,NE,2025-08-30 04:45:40.998493+00
+ea62a642-56fe-4cb3-90e9-c1bfeee9c98d,Elite Institute,approved,true,Bellevue,NE,2025-08-30 04:45:40.998493+00
+95d7661b-febf-448d-a40f-81444a600e7b,Central Club,approved,true,Bellevue,NE,2025-08-30 04:45:40.998493+00
+2a6d21e2-8c16-480d-a617-768bc544992b,Sunset Zone,approved,true,Bellevue,NE,2025-08-30 04:45:40.998493+00
+ab81c673-b7cd-479e-850a-2f9db8f331eb,Riverside Institute,approved,true,Kenosha,WI,2025-08-30 04:45:40.92222+00
+1f26ea81-52c8-42a3-a99f-46b61b8b0e67,Maple Club,approved,true,Kenosha,WI,2025-08-30 04:45:40.92222+00
+6ab36a7e-c79a-4dee-9b85-e04b528d4d39,Sports Academy,approved,true,Kenosha,WI,2025-08-30 04:45:40.92222+00
+18fee89e-7fe1-421e-959f-091f54bcd059,Premier Institute,approved,true,Racine,WI,2025-08-30 04:45:40.92222+00
+b7017087-9142-4fd3-a7fa-70fbf1b6b524,Elite Place,approved,true,Racine,WI,2025-08-30 04:45:40.92222+00
+2eb95ba6-993f-418d-bd8e-c891169acaf4,Willow Institute,approved,true,Racine,WI,2025-08-30 04:45:40.92222+00
+cad26974-f5c1-4d5d-9d26-0c9fe5158816,Riverside Hub,approved,true,Minneapolis,MN,2025-08-30 04:45:40.92222+00
+7ea162aa-cdc0-4bc0-8554-34fe033cf76d,Pine Courts,approved,true,Minneapolis,MN,2025-08-30 04:45:40.92222+00
+e22eb8cb-67d0-45cf-ad7b-23856810be36,Riverside Institute,approved,true,Minneapolis,MN,2025-08-30 04:45:40.92222+00
+c6d35712-cf36-4087-92e2-510e58a8c471,Premier Fields,approved,true,Saint Paul,MN,2025-08-30 04:45:40.92222+00
+061241e4-3c64-4bac-880c-b81320851451,Oakwood Institute,approved,true,Saint Paul,MN,2025-08-30 04:45:40.92222+00
+c5ee0b92-e24c-49dc-9765-897bb25defd1,Fitness Fields,approved,true,Saint Paul,MN,2025-08-30 04:45:40.92222+00
+de1ef7d7-6e5f-4eb7-a493-bf8e845a5e98,Sunset Courts,approved,true,Saint Paul,MN,2025-08-30 04:45:40.92222+00
+7347416c-eed8-493f-aa95-ab6d984ce48b,Maple Fields,approved,true,Saint Paul,MN,2025-08-30 04:45:40.92222+00
+36f790a3-f28c-47a4-bad4-048132b2d723,Champions Academy,approved,true,Saint Paul,MN,2025-08-30 04:45:40.92222+00
+ae7ced48-9065-4c8f-99de-d71a31ec9ca7,Saint Paul Complex,approved,true,Saint Paul,MN,2025-08-30 04:45:40.92222+00
+7167f658-798d-4c42-97bf-771036373487,Community Institute,approved,true,Rochester,MN,2025-08-30 04:45:40.92222+00
+5a0af34d-3756-479f-b3df-1a8cf58729a7,Metro Place,approved,true,Rochester,MN,2025-08-30 04:45:40.92222+00
+714b4102-8042-4c76-a78c-29753d7d955b,Victory Zone,approved,true,Rochester,MN,2025-08-30 04:45:40.92222+00
+cf1cfbf3-845b-45fd-a980-616d16f4da5a,Heritage Center,approved,true,Rochester,MN,2025-08-30 04:45:40.92222+00
+315c2217-241f-4883-8cf9-c85f3f410b4c,Cedar Zone,approved,true,Rochester,MN,2025-08-30 04:45:40.92222+00
+3eeb2676-0314-4cb8-aa5d-d689485ea264,Central Hub,approved,true,Rochester,MN,2025-08-30 04:45:40.92222+00
+3bfab635-7245-4677-a5ee-11d9fb8793e8,Victory Academy,approved,true,Duluth,MN,2025-08-30 04:45:40.92222+00
+239c0562-4014-44dc-9588-453e54048afb,Elite Institute,approved,true,Duluth,MN,2025-08-30 04:45:40.92222+00
+3823dfd0-d8a2-433f-adb0-276ae808048f,Champions Hub,approved,true,Duluth,MN,2025-08-30 04:45:40.92222+00
+04aad7fd-880c-4237-aaa2-b890dcf7fcaa,Athletic Academy,approved,true,Duluth,MN,2025-08-30 04:45:40.92222+00
+fb0dc898-38ff-4120-96a6-cd11212103aa,Champions Park,approved,true,Bloomington,MN,2025-08-30 04:45:40.92222+00
+c97c8877-fbea-40ea-86b1-4f2641609722,Willow Arena,approved,true,Bloomington,MN,2025-08-30 04:45:40.92222+00
+f0c10cfe-577e-4bd7-be2c-174422ca98a2,Victory Complex,approved,true,Bloomington,MN,2025-08-30 04:45:40.92222+00
+8d1205ad-7c4e-454a-adc7-d2b83a76e3b6,Des Moines Fields,approved,true,Des Moines,IA,2025-08-30 04:45:40.92222+00
+37d76c8f-4b2d-4333-8adf-2ec0dc788d2e,Central Hub,approved,true,Des Moines,IA,2025-08-30 04:45:40.92222+00
+bbacbceb-ff24-4d16-aee1-cd518e1dfba6,Heritage Center,approved,true,Des Moines,IA,2025-08-30 04:45:40.92222+00
+92043eb5-ad8c-43e7-8283-e2374c06ff50,Community Arena,approved,true,Des Moines,IA,2025-08-30 04:45:40.92222+00
+223d5fd3-93e6-4c9e-af7a-1e57c13c690e,Elite Complex,approved,true,Des Moines,IA,2025-08-30 04:45:40.92222+00
+cf395019-e116-4d8c-a71e-15e24263efe3,Champions Zone,approved,true,Des Moines,IA,2025-08-30 04:45:40.92222+00
+6436a64c-0344-4d2b-a40e-c4794100fdae,Community Facility,approved,true,Cedar Rapids,IA,2025-08-30 04:45:40.92222+00
+8473f76f-b8b2-4119-ab24-057b4f4dd084,Athletic Hub,approved,true,Cedar Rapids,IA,2025-08-30 04:45:40.92222+00
+c2afbe16-8884-4f5e-ab6b-e75bc92716d7,Sports Arena,approved,true,Cedar Rapids,IA,2025-08-30 04:45:40.92222+00
+bbf1d050-9d5f-42fc-9147-b084d538c4f6,Elite Club,approved,true,Cedar Rapids,IA,2025-08-30 04:45:40.92222+00
+af5a0ee0-75eb-4d82-be97-9d1d514af43a,Central Zone,approved,true,Davenport,IA,2025-08-30 04:45:40.92222+00
+abd63c0e-03d9-45a0-a68b-48f36b148139,Riverside Center,approved,true,Davenport,IA,2025-08-30 04:45:40.92222+00
+509effb8-325f-4d36-9b51-f7e4f22a618b,Recreation Zone,approved,true,Davenport,IA,2025-08-30 04:45:40.92222+00
+75262c61-e255-4aa6-a5a6-20e78fb3ce0b,Elite Place,approved,true,Davenport,IA,2025-08-30 04:45:40.92222+00
+5b94ac7f-b1ff-459e-a728-04a9803246ad,Victory Facility,approved,true,Davenport,IA,2025-08-30 04:45:40.92222+00
+7b78a854-c99b-4467-890e-85f3933cc492,Champions Facility,approved,true,Davenport,IA,2025-08-30 04:45:40.92222+00
+fd87cd99-2013-4460-9243-7b05816306fb,Fitness Institute,approved,true,Davenport,IA,2025-08-30 04:45:40.92222+00
+c3de4f1f-c4d0-44bd-a140-8220ba65d838,Champions Institute,approved,true,Sioux City,IA,2025-08-30 04:45:40.92222+00
+f1b55e61-0f4d-4b77-84f0-7c6933fd0bed,Sunset Place,approved,true,Sioux City,IA,2025-08-30 04:45:40.92222+00
+50c51cd4-0941-4e1f-9a25-5b5e2b1cde74,Cedar Club,approved,true,Sioux City,IA,2025-08-30 04:45:40.92222+00
+106fc62c-bb59-4a50-87ef-e6e77bc27b72,Victory Center,approved,true,Sioux City,IA,2025-08-30 04:45:40.92222+00
+383dd4a4-2605-4810-be50-23bc0fb8e0e0,Heritage Complex,approved,true,Detroit,MI,2025-08-30 04:45:40.835272+00
+aa8fcf1c-ad93-4e93-805c-4d5b768f9128,Athletic Place,approved,true,Detroit,MI,2025-08-30 04:45:40.835272+00
+2cc5e4a0-b916-4a5e-9841-34ad2befbabb,Recreation Arena,approved,true,Detroit,MI,2025-08-30 04:45:40.835272+00
+9ac158ca-c531-49cc-a638-e969b494e54e,Community Facility,approved,true,Detroit,MI,2025-08-30 04:45:40.835272+00
+dddf054d-75b1-425f-8cea-be5671e970d3,Pine Club,approved,true,Grand Rapids,MI,2025-08-30 04:45:40.835272+00
+545448c6-da0d-4106-b91b-7320931adbb4,Elite Club,approved,true,Grand Rapids,MI,2025-08-30 04:45:40.835272+00
+8970f6a5-66bf-48d5-b7d8-a7098add2e38,Sports Complex,approved,true,Grand Rapids,MI,2025-08-30 04:45:40.835272+00
+989d43ed-e3ac-4a5e-a812-f504b739dbc3,Cedar Facility,approved,true,Grand Rapids,MI,2025-08-30 04:45:40.835272+00
+07af4a50-4444-46b5-af39-b8ec2925e524,Fitness Fields,approved,true,Grand Rapids,MI,2025-08-30 04:45:40.835272+00
+5546ce91-db58-4e0a-83d8-1d8c016ebb09,Maple Academy,approved,true,Grand Rapids,MI,2025-08-30 04:45:40.835272+00
+6e666b7c-d54d-4b7a-95a3-ddce08c8fdae,Heritage Zone,approved,true,Warren,MI,2025-08-30 04:45:40.835272+00
+40059ebf-1f8f-4c74-b9a2-1eb1c478bd5b,Champions Zone,approved,true,Warren,MI,2025-08-30 04:45:40.835272+00
+c9ce322e-ccd0-408b-98d3-f9f5f97528c3,Willow Courts,approved,true,Warren,MI,2025-08-30 04:45:40.835272+00
+dfe2dbb5-0fbe-4f2a-83be-af679020f9de,Community Complex,approved,true,Warren,MI,2025-08-30 04:45:40.835272+00
+7c08ffba-efac-4383-9e8a-246fdfd33fe3,Victory Institute,approved,true,Sterling Heights,MI,2025-08-30 04:45:40.835272+00
+779157cc-6cdf-4b2f-95f4-8882ceaae830,Oakwood Place,approved,true,Sterling Heights,MI,2025-08-30 04:45:40.835272+00
+e448cb5b-a2b6-47ce-a91f-554e96e27f8b,Premier Fields,approved,true,Sterling Heights,MI,2025-08-30 04:45:40.835272+00
+8d393e82-3fa4-4a78-bb71-42fdb622dad3,Willow Place,approved,true,Sterling Heights,MI,2025-08-30 04:45:40.835272+00
+816f5f07-6a09-44a3-bc57-15c26f9c1c8c,Pine Club,approved,true,Ann Arbor,MI,2025-08-30 04:45:40.835272+00
+9b36f050-f8b9-4be4-b588-01c8bddb954c,Sunset Courts,approved,true,Ann Arbor,MI,2025-08-30 04:45:40.835272+00
+9f3f8f89-180a-4563-8c99-4a65c96d3df1,Central Center,approved,true,Ann Arbor,MI,2025-08-30 04:45:40.835272+00
+3b6756b0-91d7-4f10-8338-784dac812eb7,Cedar Arena,approved,true,Ann Arbor,MI,2025-08-30 04:45:40.835272+00
+9c11a737-76b9-4f38-a2f8-db6244290c2b,Recreation Fields,approved,true,Ann Arbor,MI,2025-08-30 04:45:40.835272+00
+0398673d-f608-4c77-b4f1-170b5ee73f90,Metro Fields,approved,true,Lansing,MI,2025-08-30 04:45:40.835272+00
+866437e9-d8ad-4d9f-ba71-c477a64cc362,Willow Complex,approved,true,Lansing,MI,2025-08-30 04:45:40.835272+00
+a4fedccb-657f-4343-af88-aaa03830c945,Premier Institute,approved,true,Lansing,MI,2025-08-30 04:45:40.835272+00
+38ea1470-c692-4e5d-b82d-3b1ce9b781bd,Elite Center,approved,true,Lansing,MI,2025-08-30 04:45:40.835272+00
+3c0f62c9-c31a-4e7d-9251-de7a6fc36e5d,Lansing Hub,approved,true,Lansing,MI,2025-08-30 04:45:40.835272+00
+13802d34-fc88-40e8-adf3-33b166fceed4,Athletic Arena,approved,true,Lansing,MI,2025-08-30 04:45:40.835272+00
+1e2a4208-7912-4dcf-b6b7-80467cd54ec4,Cedar Hub,approved,true,Lansing,MI,2025-08-30 04:45:40.835272+00
+3a42d246-5d31-4722-a519-afaa7848bd2d,Maple Park,approved,true,Lansing,MI,2025-08-30 04:45:40.835272+00
+16749752-681b-43d7-a356-3d01dfe3c6d5,Premier Place,approved,true,Milwaukee,WI,2025-08-30 04:45:40.835272+00
+c37972f2-8d36-4cf5-a8fd-2419523fd9d4,Elite Hub,approved,true,Milwaukee,WI,2025-08-30 04:45:40.835272+00
+44aec271-8038-49b3-8388-87ef94136122,Sports Academy,approved,true,Milwaukee,WI,2025-08-30 04:45:40.835272+00
+53d127d9-04ec-43c8-8cdc-04497150bc86,Pine Club,approved,true,Milwaukee,WI,2025-08-30 04:45:40.835272+00
+135c1841-3ef1-485d-a051-7765234c31f1,Victory Zone,approved,true,Milwaukee,WI,2025-08-30 04:45:40.835272+00
+3e9fde38-6d53-42b9-8626-db785c634ff5,Pine Facility,approved,true,Milwaukee,WI,2025-08-30 04:45:40.835272+00
+406a380f-bdc0-4763-b72d-af3526ae4f81,Champions Facility,approved,true,Madison,WI,2025-08-30 04:45:40.835272+00
+98171481-1322-407c-8894-9dfbfe635ee6,Champions Hub,approved,true,Madison,WI,2025-08-30 04:45:40.835272+00
+daf711d2-366c-4cde-9166-7d458cec10d6,Cedar Facility,approved,true,Madison,WI,2025-08-30 04:45:40.835272+00
+b625a91a-d374-4c84-a801-272c78fbc22a,Champions Park,approved,true,Madison,WI,2025-08-30 04:45:40.835272+00
+f14963e5-1a6b-48ec-a86c-dc713cca23a7,Oakwood Institute,approved,true,Green Bay,WI,2025-08-30 04:45:40.835272+00
+1e6b8ca1-acd7-40a2-8857-263028c781e0,Sunset Hub,approved,true,Green Bay,WI,2025-08-30 04:45:40.835272+00
+eb2cac26-8f48-4f03-8e19-ae2af49d0c09,Oakwood Fields,approved,true,Green Bay,WI,2025-08-30 04:45:40.835272+00
+7db6c360-430a-421b-b3ec-1959d68c0396,Sunset Place,approved,true,Green Bay,WI,2025-08-30 04:45:40.835272+00
+48c631af-604c-4202-9936-9a46a23d3ffd,Metro Facility,approved,true,Green Bay,WI,2025-08-30 04:45:40.835272+00
+636df4d2-e13c-45c8-bbb9-7bd8dfd3f3f7,Metro Arena,approved,true,Kenosha,WI,2025-08-30 04:45:40.835272+00
+32126039-3857-44bb-8522-b164392a2288,Recreation Zone,approved,true,Kenosha,WI,2025-08-30 04:45:40.835272+00
+01fc621c-aa5e-4c26-aa56-4960846dd260,Sports Hub,approved,true,Kenosha,WI,2025-08-30 04:45:40.835272+00
+af3fb7e8-6bc8-4145-ba64-1610d8ea3913,Sports Academy,approved,true,Kenosha,WI,2025-08-30 04:45:40.835272+00
+2875573e-af00-4255-b906-92a3fc4b20b3,Oakwood Fields,approved,true,South Bend,IN,2025-08-30 04:45:40.750592+00
+c79a9338-fa48-49c4-9066-b51be021f471,Fitness Hub,approved,true,South Bend,IN,2025-08-30 04:45:40.750592+00
+0595e63b-418c-4047-8d09-9bafa5233003,Pine Club,approved,true,South Bend,IN,2025-08-30 04:45:40.750592+00
+9ba21aa5-f835-4ce8-8484-f4fec948bc7f,Victory Hub,approved,true,South Bend,IN,2025-08-30 04:45:40.750592+00
+7bb40fe3-b932-4248-9462-785dc5bb9b30,Carmel Fields,approved,true,Carmel,IN,2025-08-30 04:45:40.750592+00
+e60f91d6-e75e-41a6-8d7b-cc1664920aff,Heritage Hub,approved,true,Carmel,IN,2025-08-30 04:45:40.750592+00
+b1bfb3cd-5426-4359-9780-39b3acd2b0f9,Recreation Hub,approved,true,Carmel,IN,2025-08-30 04:45:40.750592+00
+1bd2b46a-2aae-4b95-85f2-ace4f9404fbf,Metro Facility,approved,true,Carmel,IN,2025-08-30 04:45:40.750592+00
+43f480ea-f1f6-4f7b-badd-274491b46c16,Riverside Institute,approved,true,Carmel,IN,2025-08-30 04:45:40.750592+00
+f2482691-80a9-4aaa-aabb-b1f014e8000e,Oakwood Institute,approved,true,Carmel,IN,2025-08-30 04:45:40.750592+00
+dfdc7653-3dd6-4746-8a4d-cbe19132d846,Maple Place,approved,true,Carmel,IN,2025-08-30 04:45:40.750592+00
+f40a06d2-4eee-423a-8588-1f062be4a3a6,Pine Facility,approved,true,Columbus,OH,2025-08-30 04:45:40.750592+00
+0fcad30c-9a9f-4b72-8bd5-b6c5daa5cdb7,Premier Center,approved,true,Columbus,OH,2025-08-30 04:45:40.750592+00
+dbad2679-bd2c-4637-b4d3-d2501f4ac3d5,Pine Hub,approved,true,Columbus,OH,2025-08-30 04:45:40.750592+00
+74b48003-65e5-4bca-b14c-3059db252b24,Premier Arena,approved,true,Columbus,OH,2025-08-30 04:45:40.750592+00
+e0001545-8958-4d07-abe9-ec8ec63514e4,Victory Zone,approved,true,Columbus,OH,2025-08-30 04:45:40.750592+00
+52a158d0-c2f0-45d2-8631-bdfa29064a5c,Recreation Fields,approved,true,Cleveland,OH,2025-08-30 04:45:40.750592+00
+052b665b-b852-4dbc-a05f-739214ba7beb,Cedar Academy,approved,true,Cleveland,OH,2025-08-30 04:45:40.750592+00
+cd17c9d0-ad61-4924-99f5-27bf4a161188,Fitness Zone,approved,true,Cleveland,OH,2025-08-30 04:45:40.750592+00
+c93793f6-be5b-4dd4-b0c6-8ed60c51b486,Willow Institute,approved,true,Cleveland,OH,2025-08-30 04:45:40.750592+00
+42f0423c-47ee-43f3-b249-810206162267,Premier Fields,approved,true,Cleveland,OH,2025-08-30 04:45:40.750592+00
+1f7fc607-9c81-4c65-b4dc-04a99361a180,Heritage Courts,approved,true,Cleveland,OH,2025-08-30 04:45:40.750592+00
+01de31ef-0179-4283-9cba-aac8dc4d2c74,Community Complex,approved,true,Cincinnati,OH,2025-08-30 04:45:40.750592+00
+c295870e-f995-4c29-b191-8ef6887603ed,Cincinnati Club,approved,true,Cincinnati,OH,2025-08-30 04:45:40.750592+00
+54d1b753-8a26-4f61-9776-8ab4aefb3e53,Central Zone,approved,true,Cincinnati,OH,2025-08-30 04:45:40.750592+00
+4d09a15f-fbc0-4171-b30e-8ad38036811e,Maple Institute,approved,true,Cincinnati,OH,2025-08-30 04:45:40.750592+00
+1b4f7ad0-5f1c-449a-aa7a-18ea8021fa9c,Riverside Courts,approved,true,Cincinnati,OH,2025-08-30 04:45:40.750592+00
+5e70ff6f-2655-43df-a767-23d01eaaf045,Central Hub,approved,true,Cincinnati,OH,2025-08-30 04:45:40.750592+00
+abfd95da-b339-4348-929c-ffaeaf14e091,Champions Academy,approved,true,Cincinnati,OH,2025-08-30 04:45:40.750592+00
+fe1f4671-6076-45ed-9f0c-9422aea9c4f1,Heritage Academy,approved,true,Toledo,OH,2025-08-30 04:45:40.750592+00
+2c1d6f57-a9a6-44e5-9141-15c0cad32bd2,Sports Institute,approved,true,Toledo,OH,2025-08-30 04:45:40.750592+00
+840d13a2-844c-49a3-867b-db44ff4b9f2d,Fitness Hub,approved,true,Toledo,OH,2025-08-30 04:45:40.750592+00
+17a59412-b452-4596-8642-16028b620235,Toledo Courts,approved,true,Toledo,OH,2025-08-30 04:45:40.750592+00
+96818ffc-24a0-48ee-8127-a67e22828b8c,Champions Institute,approved,true,Akron,OH,2025-08-30 04:45:40.750592+00
+35436320-3ca0-447c-a2c5-d3f540482f19,Willow Academy,approved,true,Akron,OH,2025-08-30 04:45:40.750592+00
+a6e2156b-56e2-4f9c-ad6e-33c9128a6347,Riverside Fields,approved,true,Akron,OH,2025-08-30 04:45:40.750592+00
+1de4d916-4fa8-42fa-8783-eaf66146f068,Recreation Zone,approved,true,Akron,OH,2025-08-30 04:45:40.750592+00
+9b39bfeb-0935-4512-86c0-c047f590fe51,Athletic Academy,approved,true,Akron,OH,2025-08-30 04:45:40.750592+00
+c568bcad-062f-4f62-86e9-66bde6dc1dac,Sunset Park,approved,true,Akron,OH,2025-08-30 04:45:40.750592+00
+787db414-e084-4555-909d-7d22af3c8962,Central Academy,approved,true,Akron,OH,2025-08-30 04:45:40.750592+00
+4bdd1bcf-0275-431e-bcb6-cd234ae10517,Cedar Center,approved,true,Dayton,OH,2025-08-30 04:45:40.750592+00
+4baf62f4-4b8a-4f70-b044-961d4f9c13de,Premier Place,approved,true,Dayton,OH,2025-08-30 04:45:40.750592+00
+ab75d493-ddb2-4280-aaef-e9d29c85ebac,Heritage Center,approved,true,Dayton,OH,2025-08-30 04:45:40.750592+00
+7551728d-6387-4759-8a3e-9e573442196b,Central Institute,approved,true,Dayton,OH,2025-08-30 04:45:40.750592+00
+9d0d462b-e22b-49f5-a83c-c1c14130a02d,Victory Zone,approved,true,Dayton,OH,2025-08-30 04:45:40.750592+00
+884e0ec7-ac84-4c05-bd20-a584a91bca0c,Fitness Zone,approved,true,Dayton,OH,2025-08-30 04:45:40.750592+00
+7d305fe4-ec47-4d82-bf5e-714f3d792322,Pine Complex,approved,true,Dayton,OH,2025-08-30 04:45:40.750592+00
+2eb8eeab-1555-4fee-a998-eddcb7ff4a6a,Athletic Institute,approved,true,Dayton,OH,2025-08-30 04:45:40.750592+00
+74d2eecf-32e8-4ccd-92a3-f3105dd81a53,Sunset Institute,approved,true,Detroit,MI,2025-08-30 04:45:40.750592+00
+915b2dde-441f-446a-836e-29382bac7ed5,Willow Academy,approved,true,Detroit,MI,2025-08-30 04:45:40.750592+00
+b8b4b313-0c60-4ba2-8d99-44d28015380e,Riverside Club,approved,true,Chicago,IL,2025-08-30 04:45:40.63866+00
+e839bac5-cbac-4b22-8e07-3927c4f7df58,Cedar Academy,approved,true,Chicago,IL,2025-08-30 04:45:40.63866+00
+4c6c38f1-1392-4fc5-b27f-6737bae55bfb,Sunset Institute,approved,true,Chicago,IL,2025-08-30 04:45:40.63866+00
+c6a52b91-cc85-4940-88cf-912607dd0e33,Heritage Arena,approved,true,Chicago,IL,2025-08-30 04:45:40.63866+00
+51307773-6e49-4d80-aff7-0d23a440fc3d,Victory Place,approved,true,Chicago,IL,2025-08-30 04:45:40.63866+00
+1de4587d-6cf7-4ca1-b741-d3587a88985b,Community Institute,approved,true,Aurora,IL,2025-08-30 04:45:40.63866+00
+82c902e0-d949-4362-bcf1-23be37bc883a,Athletic Center,approved,true,Aurora,IL,2025-08-30 04:45:40.63866+00
+78ff44f9-c943-413d-92f2-45611ba42a5e,Recreation Hub,approved,true,Aurora,IL,2025-08-30 04:45:40.63866+00
+6396efc6-15f3-4f24-8c79-f4c9253fb23b,Willow Arena,approved,true,Aurora,IL,2025-08-30 04:45:40.63866+00
+eef22f41-7ede-43c3-825d-5a641cc0e107,Oakwood Complex,approved,true,Aurora,IL,2025-08-30 04:45:40.63866+00
+958202b3-6ae9-4d74-8fd7-d6f744b4f668,Elite Zone,approved,true,Aurora,IL,2025-08-30 04:45:40.63866+00
+b0012823-c79e-4598-afd7-ff228d41973f,Recreation Academy,approved,true,Rockford,IL,2025-08-30 04:45:40.63866+00
+a92530fe-8fb8-486f-9c0e-01a7a75188f4,Willow Fields,approved,true,Rockford,IL,2025-08-30 04:45:40.63866+00
+50fca40c-b3fc-4769-8b18-90caa54277cd,Community Club,approved,true,Rockford,IL,2025-08-30 04:45:40.63866+00
+0c177213-c7d3-4912-9af5-ba4c53b8ff53,Sunset Facility,approved,true,Rockford,IL,2025-08-30 04:45:40.63866+00
+ac98219f-340b-411a-8047-fba16c90da9a,Pine Arena,approved,true,Rockford,IL,2025-08-30 04:45:40.63866+00
+92340c77-b26c-4997-b10f-c515b0136b06,Oakwood Fields,approved,true,Rockford,IL,2025-08-30 04:45:40.63866+00
+d11ddadf-d9b3-4ac3-9839-1d2a24653ef9,Riverside Facility,approved,true,Joliet,IL,2025-08-30 04:45:40.63866+00
+4946cd9a-1b85-4742-b431-a680463c8e8d,Willow Facility,approved,true,Joliet,IL,2025-08-30 04:45:40.63866+00
+36004669-6cf6-4f1d-b3f1-3ff7afa65085,Pine Institute,approved,true,Joliet,IL,2025-08-30 04:45:40.63866+00
+742ba117-8624-43a2-9e3a-5c9149d24367,Central Academy,approved,true,Joliet,IL,2025-08-30 04:45:40.63866+00
+f7deb9c4-5aff-4ee1-bb6a-8ff1ad137dd6,Community Place,approved,true,Joliet,IL,2025-08-30 04:45:40.63866+00
+b7a2b790-46e5-44a5-ad3c-acddbbfd1ffe,Sunset Complex,approved,true,Naperville,IL,2025-08-30 04:45:40.63866+00
+f6214635-98bf-4f53-b026-81dcd2e41cde,Central Club,approved,true,Naperville,IL,2025-08-30 04:45:40.63866+00
+7c36961c-8656-4c0e-b4ad-cd20a31af2b8,Riverside Facility,approved,true,Naperville,IL,2025-08-30 04:45:40.63866+00
+5e971306-4aa6-40c0-a2eb-f40c74053921,Recreation Facility,approved,true,Naperville,IL,2025-08-30 04:45:40.63866+00
+9a8ed482-a151-41db-9701-3c6901943e0d,Recreation Facility,approved,true,Springfield,IL,2025-08-30 04:45:40.63866+00
+c33985de-d10e-4488-b56f-8e4341db4caf,Willow Arena,approved,true,Springfield,IL,2025-08-30 04:45:40.63866+00
+3b1cf200-6ed0-42dd-a617-c069402c5615,Champions Park,approved,true,Springfield,IL,2025-08-30 04:45:40.63866+00
+13cac763-c2cd-4c4a-bdbd-8a08c4944e5e,Fitness Hub,approved,true,Springfield,IL,2025-08-30 04:45:40.63866+00
+3b2a799d-3329-4d35-8a75-8f01ac335cf0,Springfield Courts,approved,true,Springfield,IL,2025-08-30 04:45:40.63866+00
+2d10d369-e149-4a6a-b8cf-93849dee0ea3,Community Complex,approved,true,Springfield,IL,2025-08-30 04:45:40.63866+00
+73711b36-8287-4b1b-8b7a-d427f7356de4,Sunset Hub,approved,true,Peoria,IL,2025-08-30 04:45:40.63866+00
+aed6a253-4f76-4053-b1f7-33d341acf86d,Victory Facility,approved,true,Peoria,IL,2025-08-30 04:45:40.63866+00
+5ad18220-7aa5-418d-b1ad-de90fda73cfc,Metro Courts,approved,true,Peoria,IL,2025-08-30 04:45:40.63866+00
+c0daab92-dade-44b6-91c6-14e0173e17fe,Maple Complex,approved,true,Indianapolis,IN,2025-08-30 04:45:40.63866+00
+9d843e02-e647-4254-bdbb-025e62954f42,Metro Zone,approved,true,Indianapolis,IN,2025-08-30 04:45:40.63866+00
+d1c0c59f-0e59-4be6-88f9-e9f730354cf1,Fitness Courts,approved,true,Indianapolis,IN,2025-08-30 04:45:40.63866+00
+826baaf9-89e8-48af-acd5-86f957b366cf,Metro Zone,approved,true,Indianapolis,IN,2025-08-30 04:45:40.63866+00
+4f6cf6df-e619-4980-973b-f6fd732ac09e,Willow Arena,approved,true,Indianapolis,IN,2025-08-30 04:45:40.63866+00
+e2dcf279-3f67-42a9-b32f-2125029a005a,Recreation Hub,approved,true,Indianapolis,IN,2025-08-30 04:45:40.63866+00
+702dafa8-6763-4618-86f7-16525808e115,Oakwood Park,approved,true,Indianapolis,IN,2025-08-30 04:45:40.63866+00
+b6ac9fd1-2e0e-46b1-8b39-92ba83bbad16,Victory Hub,approved,true,Fort Wayne,IN,2025-08-30 04:45:40.63866+00
+f7ae8927-60d2-4b82-9d70-21d7c86d85f5,Willow Club,approved,true,Fort Wayne,IN,2025-08-30 04:45:40.63866+00
+54122be8-f895-41a1-865e-4b985b68c5d1,Elite Center,approved,true,Fort Wayne,IN,2025-08-30 04:45:40.63866+00
+3e90b4a4-673d-497b-ae7e-5ef3a1487d88,Central Complex,approved,true,Fort Wayne,IN,2025-08-30 04:45:40.63866+00
+ffd025d8-ca6b-46c0-930d-30053c2b624b,Maple Arena,approved,true,Evansville,IN,2025-08-30 04:45:40.63866+00
+9b725bd1-177e-4cec-a488-fbbbdd18eb1d,Fitness Place,approved,true,Evansville,IN,2025-08-30 04:45:40.63866+00
+af1c7716-9f1b-40b6-9b7f-649586aa0ee7,Victory Arena,approved,true,Evansville,IN,2025-08-30 04:45:40.63866+00
+d3a3ece9-8c7b-43c4-95e8-29802b747289,Heritage Zone,approved,true,Evansville,IN,2025-08-30 04:45:40.63866+00
+c85e7df6-0f71-4979-a238-4c4d221c8f83,Chicken,approved,true,Fairway,KS,2025-08-29 05:07:01.588117+00
+453280e4-0399-4337-861b-bad4ed73c9f4,this is new,approved,true,Fairway,KS,2025-08-29 04:33:54.99702+00
+2a5c359b-4631-47b3-9af1-953096571965,a new gym,approved,true,Fairway,KS,2025-08-29 04:27:14.161548+00
+6f3e62c3-4c28-47b5-8735-1d47d7651f73,Chicken Gym,approved,true,Fairway,KS,2025-08-29 04:08:01.045197+00
+25a7e2b9-951f-4c47-ab5c-5f82e3776dc4,Highlands Elementary Gym,approved,true,Fairway,KS,2025-08-29 03:47:43.100771+00

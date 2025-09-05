@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
-import { Search, Filter, MapPin, Star, DollarSign, Grid, List, Navigation } from 'lucide-react'
+import { Search, Filter, MapPin, Star, DollarSign, Grid, List, Navigation, Plus, Clock, Calendar } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/lib/auth'
 import { getFacilitiesWithinRadius, getBrowserLocation, geocodeAddress, LocationData } from '@/lib/geolocation-new'
@@ -25,6 +25,8 @@ interface Facility {
   price: number
   price_unit: string
   capacity: number
+  availability_increment?: number
+  minimum_rental_duration?: number
   rating: number | null
   review_count: number | null
   status: string
@@ -55,6 +57,8 @@ interface Facility {
 
 const categories = ['All', 'Gym & Fitness', 'Swimming Pool', 'Basketball Court', 'Tennis Court', 'Yoga Studio']
 const priceRanges = ['All', '$0-25', '$26-50', '$51-75', '$76+']
+const minDurationOptions = ['All', '30 min', '1 hour', '2 hours', '3+ hours']
+const incrementOptions = ['All', '15 min', '30 min', '1 hour']
 const sortOptions = ['Relevance', 'Price: Low to High', 'Price: High to Low', 'Rating', 'Distance']
 
 export default function BrowsePage() {
@@ -64,6 +68,8 @@ export default function BrowsePage() {
   const [selectedCategory, setSelectedCategory] = useState('All')
   const [selectedCategories, setSelectedCategories] = useState<string[]>([])
   const [selectedPriceRange, setSelectedPriceRange] = useState('All')
+  const [selectedMinDuration, setSelectedMinDuration] = useState('All')
+  const [selectedIncrement, setSelectedIncrement] = useState('All')
   const [sortBy, setSortBy] = useState('Distance')
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
   const [showFilters, setShowFilters] = useState(false)
@@ -73,6 +79,19 @@ export default function BrowsePage() {
   const [userLocation, setUserLocation] = useState<LocationData | null>(null)
   const [locationLoading, setLocationLoading] = useState(false)
   const [radiusMiles, setRadiusMiles] = useState(25)
+  const [expandedCategories, setExpandedCategories] = useState<string | null>(null)
+
+  // Close expanded categories when clicking outside
+  useEffect(() => {
+    const handleClickOutside = () => {
+      setExpandedCategories(null)
+    }
+
+    if (expandedCategories) {
+      document.addEventListener('click', handleClickOutside)
+      return () => document.removeEventListener('click', handleClickOutside)
+    }
+  }, [expandedCategories])
 
   const handleLocationSelect = useCallback((location: LocationData) => {
     console.log('Location selected:', location)
@@ -122,7 +141,44 @@ export default function BrowsePage() {
         
         if (error) {
           console.error('Error loading facilities with radius:', error)
-          setError(`Failed to load facilities: ${error}`)
+          console.log('Falling back to loading all facilities...')
+          
+          // Fallback to loading all facilities if PostGIS fails
+          const { data: fallbackData, error: fallbackError } = await supabase
+            .from('facility_facilities')
+            .select(`
+              *,
+              facility_users:owner_id (
+                first_name,
+                last_name,
+                email
+              ),
+              facility_images (
+                image_url,
+                is_primary
+              ),
+              facility_amenities (
+                name,
+                icon_name
+              ),
+              facility_features (
+                name
+              )
+            `)
+            // Temporarily show all facilities to debug
+            // .eq('status', 'active')
+            // .eq('is_active', true)
+            .order('created_at', { ascending: false })
+
+          if (fallbackError) {
+            setError(`Failed to load facilities: ${fallbackError.message}`)
+          } else {
+            console.log('Loaded all facilities as fallback:', fallbackData?.length)
+            setFacilities(fallbackData || [])
+            if (fallbackData && fallbackData.length === 0) {
+              setError('No facilities found. There may be no active facilities in the database yet.')
+            }
+          }
         } else {
           console.log('Loaded facilities with distance:', data?.length)
           setFacilities(data || [])
@@ -152,7 +208,8 @@ export default function BrowsePage() {
               name
             )
           `)
-          .eq('status', 'active')
+          .eq('status', 'approved')
+          .eq('is_active', true)
           .order('created_at', { ascending: false })
 
         if (error) {
@@ -161,6 +218,9 @@ export default function BrowsePage() {
         } else {
           console.log('Loaded all facilities:', data?.length)
           setFacilities(data || [])
+          if (data && data.length === 0) {
+            setError('No facilities found. There may be no active facilities in the database yet.')
+          }
         }
       }
     } catch (err) {
@@ -182,6 +242,18 @@ export default function BrowsePage() {
       loadUserLocationFromBrowser()
     }
   }, [userLocation, loadUserLocationFromBrowser])
+
+  // Close popover when clicking outside
+  useEffect(() => {
+    const handleClickOutside = () => {
+      setExpandedCategories(null)
+    }
+    
+    if (expandedCategories) {
+      document.addEventListener('click', handleClickOutside)
+      return () => document.removeEventListener('click', handleClickOutside)
+    }
+  }, [expandedCategories])
 
   // Handle URL parameters from home page search
   useEffect(() => {
@@ -242,7 +314,18 @@ export default function BrowsePage() {
       (selectedPriceRange === '$51-75' && facility.price >= 51 && facility.price <= 75) ||
       (selectedPriceRange === '$76+' && facility.price >= 76)
     
-    return matchesSearch && matchesLegacyCategory && matchesNewCategories && matchesPriceRange
+    const matchesMinDuration = selectedMinDuration === 'All' || 
+      (selectedMinDuration === '30 min' && (facility.minimum_rental_duration || 30) <= 30) ||
+      (selectedMinDuration === '1 hour' && (facility.minimum_rental_duration || 60) <= 60) ||
+      (selectedMinDuration === '2 hours' && (facility.minimum_rental_duration || 120) <= 120) ||
+      (selectedMinDuration === '3+ hours' && (facility.minimum_rental_duration || 180) >= 180)
+    
+    const matchesIncrement = selectedIncrement === 'All' || 
+      (selectedIncrement === '15 min' && (facility.availability_increment || 30) === 15) ||
+      (selectedIncrement === '30 min' && (facility.availability_increment || 30) === 30) ||
+      (selectedIncrement === '1 hour' && (facility.availability_increment || 30) === 60)
+    
+    return matchesSearch && matchesLegacyCategory && matchesNewCategories && matchesPriceRange && matchesMinDuration && matchesIncrement
   })
 
   // Sort the filtered facilities
@@ -403,6 +486,46 @@ export default function BrowsePage() {
                   ))}
                 </div>
               </div>
+
+              {/* Minimum Duration Filter */}
+              <div className="bg-white rounded-lg shadow-sm p-4">
+                <h3 className="text-lg font-semibold text-gray-900 mb-3">Minimum Booking</h3>
+                <div className="space-y-2">
+                  {minDurationOptions.map(duration => (
+                    <label key={duration} className="flex items-center">
+                      <input
+                        type="radio"
+                        name="minDuration"
+                        value={duration}
+                        checked={selectedMinDuration === duration}
+                        onChange={(e) => setSelectedMinDuration(e.target.value)}
+                        className="text-primary-600 focus:ring-primary-500"
+                      />
+                      <span className="ml-2 text-gray-700">{duration}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              {/* Time Increment Filter */}
+              <div className="bg-white rounded-lg shadow-sm p-4">
+                <h3 className="text-lg font-semibold text-gray-900 mb-3">Time Slots</h3>
+                <div className="space-y-2">
+                  {incrementOptions.map(increment => (
+                    <label key={increment} className="flex items-center">
+                      <input
+                        type="radio"
+                        name="increment"
+                        value={increment}
+                        checked={selectedIncrement === increment}
+                        onChange={(e) => setSelectedIncrement(e.target.value)}
+                        className="text-primary-600 focus:ring-primary-500"
+                      />
+                      <span className="ml-2 text-gray-700">{increment}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
             </div>
           </div>
 
@@ -504,14 +627,21 @@ export default function BrowsePage() {
                             </div>
                           </div>
                         )}
-                        <div className="absolute top-3 right-3 bg-white px-2 py-1 rounded-full text-xs font-medium text-green-600">
-                          Available
+                        <div className="absolute top-3 right-3 bg-white px-2 py-1 rounded-full text-xs font-medium">
+                          <span className={`${
+                            facility.status === 'approved' || facility.status === 'active' ? 'text-green-600' :
+                            facility.status === 'pending_approval' ? 'text-yellow-600' :
+                            facility.status === 'suspended' ? 'text-red-600' :
+                            facility.status === 'inactive' ? 'text-gray-600' :
+                            'text-blue-600'
+                          }`}>
+                            {facility.status === 'approved' ? 'ACTIVE' : facility.status?.replace('_', ' ').toUpperCase() || 'UNKNOWN'}
+                          </span>
                         </div>
                       </div>
 
                       <div className="p-4 flex-1">
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="text-sm text-primary-600 font-medium">{facility.type}</span>
+                        <div className="flex items-center justify-end mb-2">
                           <div className="flex items-center space-x-1">
                             {facility.rating ? (
                               <>
@@ -545,27 +675,67 @@ export default function BrowsePage() {
 
                         {/* Categories Display */}
                         {facility.categories && facility.categories.length > 0 && (
-                          <div className="flex flex-wrap gap-1 mb-3">
+                          <div className="flex flex-wrap gap-1 mb-3 relative">
                             {facility.categories.slice(0, 3).map((category, index) => {
-                              const categoryData = FACILITY_CATEGORIES.find(cat => cat.name === category)
                               const isPrimary = category === facility.primary_category
                               return (
                                 <span
                                   key={index}
-                                  className={`text-xs px-2 py-1 rounded-full flex items-center space-x-1 ${
+                                  className={`text-xs px-2 py-1 rounded-full whitespace-nowrap ${
                                     isPrimary 
-                                      ? 'bg-primary-100 text-primary-700 border border-primary-200' 
+                                      ? 'bg-primary-100 text-primary-700 border border-primary-200 font-medium' 
                                       : 'bg-blue-50 text-blue-600'
                                   }`}
                                 >
-                                  <span>{category}</span>
+                                  {category}
                                 </span>
                               )
                             })}
                             {facility.categories.length > 3 && (
-                              <span className="text-xs bg-gray-100 text-gray-500 px-2 py-1 rounded-full">
-                                +{facility.categories.length - 3} more
-                              </span>
+                              <div className="relative">
+                                <button
+                                  onClick={(e) => {
+                                    e.preventDefault()
+                                    e.stopPropagation()
+                                    setExpandedCategories(expandedCategories === facility.id ? null : facility.id)
+                                  }}
+                                  className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-full hover:bg-gray-200 transition-colors flex items-center space-x-1"
+                                >
+                                  <Plus className="w-3 h-3" />
+                                  <span>{facility.categories.length - 3}</span>
+                                </button>
+                                {expandedCategories === facility.id && (
+                                  <div className="absolute top-full left-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg p-3 z-20 min-w-48 max-w-64">
+                                    <div className="flex flex-wrap gap-1">
+                                      {facility.categories.slice(3).map((category, index) => {
+                                        const isPrimary = category === facility.primary_category
+                                        return (
+                                          <span
+                                            key={index}
+                                            className={`text-xs px-2 py-1 rounded-full whitespace-nowrap ${
+                                              isPrimary 
+                                                ? 'bg-primary-100 text-primary-700 border border-primary-200 font-medium' 
+                                                : 'bg-blue-50 text-blue-600'
+                                            }`}
+                                          >
+                                            {category}
+                                          </span>
+                                        )
+                                      })}
+                                    </div>
+                                    <button
+                                      onClick={(e) => {
+                                        e.preventDefault()
+                                        e.stopPropagation()
+                                        setExpandedCategories(null)
+                                      }}
+                                      className="text-xs text-gray-500 hover:text-gray-700 mt-2 block"
+                                    >
+                                      Close
+                                    </button>
+                                  </div>
+                                )}
+                              </div>
                             )}
                           </div>
                         )}
@@ -582,6 +752,22 @@ export default function BrowsePage() {
                             ))}
                           </div>
                         )}
+
+                        {/* Booking Information */}
+                        <div className="space-y-1 mb-3 text-xs text-gray-600">
+                          {facility.minimum_rental_duration && (
+                            <div className="flex items-center">
+                              <Clock className="w-3 h-3 mr-1" />
+                              <span>Min: {facility.minimum_rental_duration < 60 ? `${facility.minimum_rental_duration}min` : `${facility.minimum_rental_duration / 60}hr`}</span>
+                            </div>
+                          )}
+                          {facility.availability_increment && (
+                            <div className="flex items-center">
+                              <Calendar className="w-3 h-3 mr-1" />
+                              <span>Slots: {facility.availability_increment < 60 ? `${facility.availability_increment}min` : `${facility.availability_increment / 60}hr`}</span>
+                            </div>
+                          )}
+                        </div>
 
                         <div className="flex items-center justify-between">
                           <div className="flex items-center text-gray-900">

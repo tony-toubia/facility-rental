@@ -2,8 +2,11 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import Image from 'next/image'
-import { Star, MapPin, Clock, DollarSign, Wifi, Car, Users, Shield, Calendar, ChevronLeft, ChevronRight } from 'lucide-react'
+import Link from 'next/link'
+import { Star, MapPin, Clock, DollarSign, Wifi, Car, Users, Shield, Calendar, ChevronLeft, ChevronRight, LogIn } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
+import { useAuth } from '@/lib/auth'
+import BookingAvailability from '@/components/BookingAvailability'
 
 interface Facility {
   id: string
@@ -20,8 +23,13 @@ interface Facility {
   rating: number | null
   review_count: number | null
   status: string
+  is_active: boolean
   created_at: string
   owner_id: string
+  availability_increment?: number
+  minimum_rental_duration?: number
+  availability_timezone?: string
+  availability_notes?: string
   facility_users?: {
     first_name: string
     last_name: string
@@ -43,6 +51,7 @@ interface Facility {
 }
 
 export default function FacilityDetailPage({ params }: { params: { id: string } }) {
+  const { user } = useAuth()
   const [facility, setFacility] = useState<Facility | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -55,6 +64,15 @@ export default function FacilityDetailPage({ params }: { params: { id: string } 
       setLoading(true)
       setError(null)
       
+      // First, let's check if the facility exists at all
+      const { data: facilityCheck } = await supabase
+        .from('facility_facilities')
+        .select('id, status, is_active')
+        .eq('id', params.id)
+        .single()
+      
+      console.log('Facility check:', facilityCheck)
+
       const { data, error } = await supabase
         .from('facility_facilities')
         .select(`
@@ -79,12 +97,12 @@ export default function FacilityDetailPage({ params }: { params: { id: string } 
           )
         `)
         .eq('id', params.id)
-        .eq('status', 'active')
         .single()
 
       if (error) {
         console.error('Error loading facility:', error)
-        setError('Facility not found or not available')
+        console.error('Error details:', error.message, error.details, error.hint)
+        setError(`Facility not found or not available. Error: ${error.message}`)
         return
       }
 
@@ -251,6 +269,24 @@ export default function FacilityDetailPage({ params }: { params: { id: string } 
 
               <h1 className="text-3xl font-bold text-gray-900 mb-4">{facility.name}</h1>
 
+              {/* Status Indicator */}
+              <div className="mb-4">
+                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                  facility.status === 'active' ? 'bg-green-100 text-green-800' :
+                  facility.status === 'pending_approval' ? 'bg-yellow-100 text-yellow-800' :
+                  facility.status === 'suspended' ? 'bg-red-100 text-red-800' :
+                  facility.status === 'inactive' ? 'bg-gray-100 text-gray-800' :
+                  'bg-gray-100 text-gray-800'
+                }`}>
+                  Status: {facility.status.replace('_', ' ').toUpperCase()}
+                </span>
+                {facility.is_active === false && (
+                  <span className="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                    INACTIVE
+                  </span>
+                )}
+              </div>
+
               <div className="flex items-center text-gray-600 mb-6">
                 <MapPin className="w-5 h-5 mr-2" />
                 <span>{fullAddress}</span>
@@ -305,6 +341,26 @@ export default function FacilityDetailPage({ params }: { params: { id: string } 
                   <span>Capacity: {facility.capacity} people</span>
                 </div>
               )}
+
+              {/* Booking Information */}
+              <div className="space-y-2">
+                <div className="flex items-center text-gray-600">
+                  <DollarSign className="w-5 h-5 mr-2" />
+                  <span>Price: ${facility.price}/{facility.price_unit}</span>
+                </div>
+                {facility.minimum_rental_duration && (
+                  <div className="flex items-center text-gray-600">
+                    <Clock className="w-5 h-5 mr-2" />
+                    <span>Minimum booking: {facility.minimum_rental_duration < 60 ? `${facility.minimum_rental_duration} minutes` : `${facility.minimum_rental_duration / 60} hour${facility.minimum_rental_duration > 60 ? 's' : ''}`}</span>
+                  </div>
+                )}
+                {facility.availability_increment && (
+                  <div className="flex items-center text-gray-600">
+                    <Calendar className="w-5 h-5 mr-2" />
+                    <span>Time slots: {facility.availability_increment < 60 ? `${facility.availability_increment} minute` : `${facility.availability_increment / 60} hour`} increments</span>
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Reviews */}
@@ -327,50 +383,80 @@ export default function FacilityDetailPage({ params }: { params: { id: string } 
 
           {/* Booking Sidebar */}
           <div className="lg:col-span-1">
-            <div className="bg-white rounded-lg shadow-sm p-6 sticky top-8">
-              <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center">
-                  <DollarSign className="w-6 h-6 text-gray-900" />
-                  <span className="text-2xl font-bold text-gray-900">{facility.price}</span>
-                  <span className="text-gray-600">/{facility.price_unit}</span>
-                </div>
-              </div>
-
-              {/* Booking Coming Soon */}
-              <div className="text-center py-8 border-2 border-dashed border-gray-300 rounded-lg mb-6">
-                <Calendar className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                <h4 className="text-lg font-medium text-gray-900 mb-2">Booking System Coming Soon</h4>
-                <p className="text-gray-500 text-sm">Contact the owner directly for now</p>
-              </div>
-
-              {/* Contact Button */}
-              <button
-                onClick={() => alert('Contact feature coming soon!')}
-                className="w-full btn-primary text-lg py-3 mb-6"
-              >
-                Contact Owner
-              </button>
-
-              {/* Owner Info */}
-              <div className="border-t pt-6">
-                <h4 className="text-lg font-semibold text-gray-900 mb-3">Hosted by</h4>
-                <div className="flex items-center space-x-3 mb-3">
-                  <div className="w-12 h-12 bg-primary-600 rounded-full flex items-center justify-center text-white font-medium">
-                    {ownerName.charAt(0)}
+            {user ? (
+              <BookingAvailability
+                facilityId={facility.id}
+                price={facility.price}
+                priceUnit={facility.price_unit}
+                capacity={facility.capacity}
+                availabilityIncrement={facility.availability_increment}
+                minimumRentalDuration={facility.minimum_rental_duration}
+              />
+            ) : (
+              <div className="bg-white rounded-lg shadow-sm p-6 border">
+                <div className="text-center">
+                  <div className="w-16 h-16 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <LogIn className="w-8 h-8 text-primary-600" />
                   </div>
-                  <div>
-                    <p className="font-medium text-gray-900">{ownerName}</p>
-                    <div className="flex items-center space-x-1">
-                      <Star className="w-4 h-4 text-gray-300" />
-                      <span className="text-sm text-gray-600">New host</span>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                    Sign in to check availability
+                  </h3>
+                  <p className="text-gray-600 mb-6">
+                    Create an account or sign in to view available times and make a booking.
+                  </p>
+                  <div className="space-y-3">
+                    <Link
+                      href="/login"
+                      className="w-full bg-primary-600 text-white py-2 px-4 rounded-lg font-medium hover:bg-primary-700 transition-colors inline-block text-center"
+                    >
+                      Sign In
+                    </Link>
+                    <Link
+                      href="/register"
+                      className="w-full bg-gray-100 text-gray-700 py-2 px-4 rounded-lg font-medium hover:bg-gray-200 transition-colors inline-block text-center"
+                    >
+                      Create Account
+                    </Link>
+                  </div>
+                  <div className="mt-4 pt-4 border-t border-gray-200">
+                    <div className="flex items-center justify-between text-sm text-gray-600">
+                      <span>Starting at</span>
+                      <span className="font-semibold text-lg text-gray-900">
+                        ${facility.price}/{facility.price_unit}
+                      </span>
                     </div>
                   </div>
                 </div>
-                <div className="text-sm text-gray-600 space-y-1">
-                  <p>Member since {ownerJoinDate}</p>
-                  <p className="text-gray-500">Contact: {facility.facility_users?.email}</p>
+              </div>
+            )}
+
+            {/* Owner Info */}
+            <div className="bg-white rounded-lg shadow-sm p-6 mt-6">
+              <h4 className="text-lg font-semibold text-gray-900 mb-3">Hosted by</h4>
+              <div className="flex items-center space-x-3 mb-3">
+                <div className="w-12 h-12 bg-primary-600 rounded-full flex items-center justify-center text-white font-medium">
+                  {ownerName.charAt(0)}
+                </div>
+                <div>
+                  <p className="font-medium text-gray-900">{ownerName}</p>
+                  <div className="flex items-center space-x-1">
+                    <Star className="w-4 h-4 text-gray-300" />
+                    <span className="text-sm text-gray-600">New host</span>
+                  </div>
                 </div>
               </div>
+              <div className="text-sm text-gray-600 space-y-1">
+                <p>Member since {ownerJoinDate}</p>
+                <p className="text-gray-500">Contact: {facility.facility_users?.email}</p>
+              </div>
+              
+              {/* Contact Button */}
+              <button
+                onClick={() => alert('Contact feature coming soon!')}
+                className="w-full btn-secondary text-sm py-2 mt-4"
+              >
+                Contact Owner
+              </button>
             </div>
           </div>
         </div>

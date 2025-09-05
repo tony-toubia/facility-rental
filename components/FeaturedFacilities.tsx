@@ -18,9 +18,9 @@ export default function FeaturedFacilities() {
       try {
         setLoading(true)
         const data = await getFacilities({ 
-          featured: true, 
-          limit: 4,
-          status: 'active'
+          // featured: true, // Temporarily show all facilities
+          limit: 8 // Show more for debugging
+          // No status filter - will show all facilities
         })
         setFacilities(data)
       } catch (err) {
@@ -115,8 +115,16 @@ export default function FeaturedFacilities() {
                     fill
                     className="object-cover group-hover:scale-105 transition-transform duration-200"
                   />
-                  <div className="absolute top-3 right-3 bg-white px-2 py-1 rounded-full text-xs font-medium text-green-600">
-                    {facility.status === 'active' ? 'Available' : 'Unavailable'}
+                  <div className="absolute top-3 right-3 bg-white px-2 py-1 rounded-full text-xs font-medium">
+                    <span className={`${
+                      facility.status === 'active' ? 'text-green-600' :
+                      facility.status === 'pending_approval' ? 'text-yellow-600' :
+                      facility.status === 'suspended' ? 'text-red-600' :
+                      facility.status === 'inactive' ? 'text-gray-600' :
+                      'text-blue-600'
+                    }`}>
+                      {facility.status?.replace('_', ' ').toUpperCase() || 'UNKNOWN'}
+                    </span>
                   </div>
                 </div>
 

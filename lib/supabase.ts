@@ -152,7 +152,8 @@ export type Database = {
           advance_booking_days: number | null
           cancellation_policy: string | null
           house_rules: string | null
-          status: 'active' | 'inactive' | 'pending_approval' | 'suspended'
+          status: 'active' | 'inactive' | 'pending_approval' | 'suspended' | 'pending_review' | 'needs_changes' | 'approved'
+          is_active: boolean
           is_featured: boolean | null
           rating: number | null
           review_count: number | null
@@ -183,7 +184,8 @@ export type Database = {
           advance_booking_days?: number | null
           cancellation_policy?: string | null
           house_rules?: string | null
-          status?: 'active' | 'inactive' | 'pending_approval' | 'suspended'
+          status?: 'active' | 'inactive' | 'pending_approval' | 'suspended' | 'pending_review' | 'needs_changes' | 'approved'
+          is_active?: boolean
           is_featured?: boolean | null
           rating?: number | null
           review_count?: number | null
@@ -214,7 +216,8 @@ export type Database = {
           advance_booking_days?: number | null
           cancellation_policy?: string | null
           house_rules?: string | null
-          status?: 'active' | 'inactive' | 'pending_approval' | 'suspended'
+          status?: 'active' | 'inactive' | 'pending_approval' | 'suspended' | 'pending_review' | 'needs_changes' | 'approved'
+          is_active?: boolean
           is_featured?: boolean | null
           rating?: number | null
           review_count?: number | null

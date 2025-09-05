@@ -21,8 +21,9 @@ export async function POST(request: NextRequest) {
       
       const { data, error } = await supabaseAdmin
         .from('facility_facilities')
-        .select('id, name, status, latitude, longitude')
-        .eq('status', 'active')
+        .select('id, name, status, is_active, latitude, longitude')
+        .eq('status', 'approved')
+        .eq('is_active', true)
         .limit(3)
       
       if (error) {

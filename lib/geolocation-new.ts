@@ -194,7 +194,11 @@ export async function getFacilitiesWithinRadius(
         radius_meters: radiusMiles * 1609.34 // Convert miles to meters
       })
 
-    console.log('PostGIS response:', { data, error })
+    console.log('PostGIS response:', { 
+      data: data, 
+      error: error,
+      dataLength: data?.length
+    })
 
     if (error) {
       console.error('PostGIS query error:', error)
@@ -225,6 +229,8 @@ export async function getFacilitiesWithinRadius(
       price: parseFloat(facility.price),
       price_unit: facility.price_unit,
       capacity: facility.capacity,
+      availability_increment: facility.availability_increment,
+      minimum_rental_duration: facility.minimum_rental_duration,
       rating: facility.rating ? parseFloat(facility.rating) : null,
       review_count: facility.review_count,
       status: facility.status,

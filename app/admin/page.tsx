@@ -1,8 +1,12 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
-import { CheckCircle, XCircle, Eye, Clock, MapPin, DollarSign } from 'lucide-react'
+import { useAuth } from '@/lib/auth'
+import { CheckCircle, XCircle, Eye, Clock, MapPin, DollarSign, MessageSquare, AlertCircle } from 'lucide-react'
+import StatusIconSelector from '@/components/StatusIconSelector'
+import ChangeTracker from '@/components/ChangeTracker'
 import Image from 'next/image'
 
 interface Facility {
@@ -13,9 +17,15 @@ interface Facility {
   address: string
   city: string
   state: string
+  zip_code: string
   price: number
   price_unit: string
   capacity: number
+  min_booking_duration?: number
+  max_booking_duration?: number
+  advance_booking_days?: number
+  cancellation_policy?: string
+  house_rules?: string
   status: string
   created_at: string
   owner_id: string
@@ -28,18 +38,168 @@ interface Facility {
     image_url: string
     is_primary: boolean
   }[]
+  facility_amenities?: {
+    name: string
+  }[]
+  facility_features?: {
+    name: string
+  }[]
+  availability_increment?: number
+  minimum_rental_duration?: number
+  availability_timezone?: string
+  availability_notes?: string
+  facility_default_availability?: {
+    day_of_week: number
+    start_time: string
+    end_time: string
+    is_available: boolean
+  }[]
+}
+
+interface ReviewFeedback {
+  [key: string]: string
+}
+
+interface FacilityReview {
+  id?: string
+  facility_id: string
+  basic_info_status: 'pending' | 'approved' | 'needs_changes'
+  basic_info_comments: string
+  basic_info_addressed?: boolean
+  description_status: 'pending' | 'approved' | 'needs_changes'
+  description_comments: string
+  description_addressed?: boolean
+  location_status: 'pending' | 'approved' | 'needs_changes'
+  location_comments: string
+  location_addressed?: boolean
+  pricing_status: 'pending' | 'approved' | 'needs_changes'
+  pricing_comments: string
+  pricing_addressed?: boolean
+  amenities_status: 'pending' | 'approved' | 'needs_changes'
+  amenities_comments: string
+  amenities_addressed?: boolean
+  features_status: 'pending' | 'approved' | 'needs_changes'
+  features_comments: string
+  features_addressed?: boolean
+  images_status: 'pending' | 'approved' | 'needs_changes'
+  images_comments: string
+  images_addressed?: boolean
+  policies_status: 'pending' | 'approved' | 'needs_changes'
+  policies_comments: string
+  policies_addressed?: boolean
+  availability_status: 'pending' | 'approved' | 'needs_changes'
+  availability_comments: string
+  availability_addressed?: boolean
+  general_comments: string
+  status: 'pending' | 'approved' | 'needs_changes'
+  previous_review_id?: string
+}
+
+// Move ReviewSection outside to prevent recreation on every render
+const ReviewSection = ({ 
+  title, 
+  content, 
+  facilityId, 
+  fieldPrefix,
+  facilityReviews,
+  updateReviewField,
+  initializeReview
+}: { 
+  title: string
+  content: React.ReactNode
+  facilityId: string
+  fieldPrefix: string
+  facilityReviews: {[key: string]: FacilityReview}
+  updateReviewField: (facilityId: string, field: string, value: string) => void
+  initializeReview: (facilityId: string) => FacilityReview
+}) => {
+  const review = facilityReviews[facilityId] || initializeReview(facilityId)
+  const statusField = `${fieldPrefix}_status` as keyof FacilityReview
+  const commentsField = `${fieldPrefix}_comments` as keyof FacilityReview
+  const addressedField = `${fieldPrefix}_addressed` as keyof FacilityReview
+  const currentStatus = review[statusField] as string || 'pending'
+  const previousComments = review[commentsField] as string || ''
+  const isAddressed = review[addressedField] as boolean || false
+  
+  return (
+    <div className="border border-gray-200 rounded-lg p-4 mb-4">
+      <div className="flex justify-between items-start mb-3">
+        <h4 className="font-medium text-gray-900">{title}</h4>
+        <StatusIconSelector
+          value={currentStatus as 'pending' | 'approved' | 'needs_changes'}
+          onChange={(value) => updateReviewField(facilityId, statusField, value)}
+        />
+      </div>
+      
+      <div className="mb-3">
+        {content}
+      </div>
+      
+      {/* Show previous feedback if it exists */}
+      {previousComments && currentStatus === 'pending' && (
+        <div className="mb-3 p-3 bg-yellow-50 border border-yellow-200 rounded">
+          <div className="flex items-start justify-between">
+            <div className="flex-1">
+              <h5 className="text-sm font-medium text-yellow-800 mb-1">Previous Feedback:</h5>
+              <p className="text-sm text-yellow-700">{previousComments}</p>
+            </div>
+            <label className="flex items-center ml-3 text-sm">
+              <input
+                type="checkbox"
+                checked={isAddressed}
+                onChange={(e) => updateReviewField(facilityId, addressedField, e.target.checked)}
+                className="mr-2 rounded border-gray-300 text-green-600 focus:ring-green-500"
+              />
+              <span className={`${isAddressed ? 'text-green-700 font-medium' : 'text-gray-600'}`}>
+                Addressed
+              </span>
+            </label>
+          </div>
+        </div>
+      )}
+      
+      {/* Only show comments box if status is "needs_changes" */}
+      {currentStatus === 'needs_changes' && (
+        <textarea
+          placeholder={`Feedback for ${title.toLowerCase()}...`}
+          value={review[commentsField] as string || ''}
+          onChange={(e) => updateReviewField(facilityId, commentsField, e.target.value)}
+          className="w-full text-sm border border-gray-300 rounded px-3 py-2 resize-none"
+          rows={3}
+        />
+      )}
+    </div>
+  )
 }
 
 export default function AdminPage() {
+  const router = useRouter()
+  const { user, loading: authLoading } = useAuth()
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
   const [activeTab, setActiveTab] = useState<'review' | 'testing'>('review')
   const [pendingFacilities, setPendingFacilities] = useState<Facility[]>([])
   const [reviewLoading, setReviewLoading] = useState(false)
+  const [expandedFacility, setExpandedFacility] = useState<string | null>(null)
+  const [facilityReviews, setFacilityReviews] = useState<{[key: string]: FacilityReview}>({})
 
-  // Load pending facilities on component mount
+  // Redirect if not authenticated
   useEffect(() => {
-    if (activeTab === 'review') {
+    if (!authLoading && !user) {
+      router.push('/login')
+    }
+  }, [user, authLoading, router])
+
+  // Load pending facilities on initial mount when user becomes available
+  useEffect(() => {
+    if (activeTab === 'review' && user && !authLoading && pendingFacilities.length === 0) {
+      loadPendingFacilities()
+    }
+  }, [authLoading]) // Only run when auth loading changes (initial load)
+
+  // Load pending facilities when switching to review tab
+  useEffect(() => {
+    if (activeTab === 'review' && user && pendingFacilities.length === 0) {
       loadPendingFacilities()
     }
   }, [activeTab])
@@ -59,9 +219,21 @@ export default function AdminPage() {
           facility_images (
             image_url,
             is_primary
+          ),
+          facility_amenities (
+            name
+          ),
+          facility_features (
+            name
+          ),
+          facility_default_availability (
+            day_of_week,
+            start_time,
+            end_time,
+            is_available
           )
         `)
-        .eq('status', 'pending_approval')
+        .in('status', ['pending_approval', 'needs_changes'])
         .order('created_at', { ascending: false })
 
       if (error) {
@@ -70,6 +242,25 @@ export default function AdminPage() {
       } else {
         console.log('Loaded facilities:', data)
         setPendingFacilities(data || [])
+        
+        // Load existing reviews for these facilities (get latest review per facility)
+        if (data && data.length > 0) {
+          const facilityIds = data.map(f => f.id)
+          const { data: reviews } = await supabase
+            .from('facility_reviews')
+            .select('*')
+            .in('facility_id', facilityIds)
+            .order('updated_at', { ascending: false })
+          
+          const reviewsMap: {[key: string]: FacilityReview} = {}
+          reviews?.forEach(review => {
+            // Only keep the latest review per facility (first one due to ordering)
+            if (!reviewsMap[review.facility_id]) {
+              reviewsMap[review.facility_id] = review
+            }
+          })
+          setFacilityReviews(reviewsMap)
+        }
       }
     } catch (err) {
       console.error('Error:', err)
@@ -79,22 +270,204 @@ export default function AdminPage() {
     }
   }
 
-  const updateFacilityStatus = async (facilityId: string, newStatus: 'active' | 'rejected') => {
+  const initializeReview = (facilityId: string): FacilityReview => {
+    return {
+      facility_id: facilityId,
+      basic_info_status: 'pending',
+      basic_info_comments: '',
+      basic_info_addressed: false,
+      description_status: 'pending',
+      description_comments: '',
+      description_addressed: false,
+      location_status: 'pending',
+      location_comments: '',
+      location_addressed: false,
+      pricing_status: 'pending',
+      pricing_comments: '',
+      pricing_addressed: false,
+      amenities_status: 'pending',
+      amenities_comments: '',
+      amenities_addressed: false,
+      features_status: 'pending',
+      features_comments: '',
+      features_addressed: false,
+      images_status: 'pending',
+      images_comments: '',
+      images_addressed: false,
+      policies_status: 'pending',
+      policies_comments: '',
+      policies_addressed: false,
+      availability_status: 'pending',
+      availability_comments: '',
+      availability_addressed: false,
+      general_comments: '',
+      status: 'pending'
+    }
+  }
+
+  const updateReviewField = (facilityId: string, field: string, value: string | boolean) => {
+    setFacilityReviews(prev => ({
+      ...prev,
+      [facilityId]: {
+        ...(prev[facilityId] || initializeReview(facilityId)),
+        [field]: value
+      }
+    }))
+  }
+
+  const hasAnyFeedback = (facilityId: string): boolean => {
+    const review = facilityReviews[facilityId]
+    if (!review) return false
+    
+    return !!(
+      review.basic_info_comments ||
+      review.description_comments ||
+      review.location_comments ||
+      review.pricing_comments ||
+      review.amenities_comments ||
+      review.features_comments ||
+      review.images_comments ||
+      review.policies_comments ||
+      review.availability_comments ||
+      review.general_comments
+    )
+  }
+
+  const isAlreadyRejected = (facilityId: string): boolean => {
+    const facility = pendingFacilities.find(f => f.id === facilityId)
+    return facility?.status === 'needs_changes'
+  }
+
+  const areAllSectionsApproved = (facilityId: string): boolean => {
+    const review = facilityReviews[facilityId]
+    if (!review) return false
+    
+    // All sections must be explicitly set to 'approved'
+    // Note: availability_status check is conditional in case DB columns don't exist yet
+    const basicSectionsApproved = (
+      review.basic_info_status === 'approved' &&
+      review.description_status === 'approved' &&
+      review.location_status === 'approved' &&
+      review.pricing_status === 'approved' &&
+      review.amenities_status === 'approved' &&
+      review.features_status === 'approved' &&
+      review.images_status === 'approved' &&
+      review.policies_status === 'approved'
+    )
+    
+    // Only check availability if the field exists (for backward compatibility)
+    const availabilityApproved = review.availability_status ? 
+      review.availability_status === 'approved' : true
+    
+    // Check that all previous feedback has been addressed (only if this is a resubmission)
+    const isResubmission = !!review.previous_review_id
+    const allPreviousFeedbackAddressed = !isResubmission || (
+      (!review.basic_info_comments || review.basic_info_addressed) &&
+      (!review.description_comments || review.description_addressed) &&
+      (!review.location_comments || review.location_addressed) &&
+      (!review.pricing_comments || review.pricing_addressed) &&
+      (!review.amenities_comments || review.amenities_addressed) &&
+      (!review.features_comments || review.features_addressed) &&
+      (!review.images_comments || review.images_addressed) &&
+      (!review.policies_comments || review.policies_addressed) &&
+      (!review.availability_comments || review.availability_addressed)
+    )
+    
+    return basicSectionsApproved && availabilityApproved && allPreviousFeedbackAddressed
+  }
+
+  const approveFacility = async (facilityId: string) => {
     try {
-      const { error } = await supabase
+      // Update facility status to approved
+      const { error: facilityError } = await supabase
         .from('facility_facilities')
-        .update({ status: newStatus, updated_at: new Date().toISOString() })
+        .update({ 
+          status: 'approved',
+          is_active: true,
+          updated_at: new Date().toISOString() 
+        })
         .eq('id', facilityId)
 
-      if (error) {
-        setMessage(`❌ Error updating facility: ${error.message}`)
-      } else {
-        setMessage(`✅ Facility ${newStatus === 'active' ? 'approved' : 'rejected'} successfully!`)
-        // Reload the pending facilities list
-        loadPendingFacilities()
+      if (facilityError) throw facilityError
+
+      // Create or update review record
+      const review = facilityReviews[facilityId] || initializeReview(facilityId)
+      const reviewData = {
+        ...review,
+        status: 'approved' as const,
+        basic_info_status: 'approved' as const,
+        description_status: 'approved' as const,
+        location_status: 'approved' as const,
+        pricing_status: 'approved' as const,
+        amenities_status: 'approved' as const,
+        features_status: 'approved' as const,
+        images_status: 'approved' as const,
+        policies_status: 'approved' as const
       }
-    } catch (err) {
-      setMessage(`❌ Error: ${err}`)
+
+      if (review.id) {
+        const { error: reviewError } = await supabase
+          .from('facility_reviews')
+          .update(reviewData)
+          .eq('id', review.id)
+        if (reviewError) throw reviewError
+      } else {
+        const { error: reviewError } = await supabase
+          .from('facility_reviews')
+          .insert(reviewData)
+        if (reviewError) throw reviewError
+      }
+
+      setMessage('✅ Facility approved successfully!')
+      loadPendingFacilities()
+    } catch (err: any) {
+      setMessage(`❌ Error approving facility: ${err.message}`)
+    }
+  }
+
+  const rejectFacility = async (facilityId: string) => {
+    if (!hasAnyFeedback(facilityId)) {
+      setMessage('❌ Please provide feedback before rejecting a facility.')
+      return
+    }
+
+    try {
+      // Update facility status to needs_changes
+      const { error: facilityError } = await supabase
+        .from('facility_facilities')
+        .update({ 
+          status: 'needs_changes',
+          is_active: false,
+          updated_at: new Date().toISOString() 
+        })
+        .eq('id', facilityId)
+
+      if (facilityError) throw facilityError
+
+      // Create or update review record
+      const review = facilityReviews[facilityId] || initializeReview(facilityId)
+      const reviewData = {
+        ...review,
+        status: 'needs_changes' as const
+      }
+
+      if (review.id) {
+        const { error: reviewError } = await supabase
+          .from('facility_reviews')
+          .update(reviewData)
+          .eq('id', review.id)
+        if (reviewError) throw reviewError
+      } else {
+        const { error: reviewError } = await supabase
+          .from('facility_reviews')
+          .insert(reviewData)
+        if (reviewError) throw reviewError
+      }
+
+      setMessage('✅ Facility rejected with feedback. Owner will be notified.')
+      loadPendingFacilities()
+    } catch (err: any) {
+      setMessage(`❌ Error rejecting facility: ${err.message}`)
     }
   }
 
@@ -208,8 +581,8 @@ export default function AdminPage() {
           price: 25.00,
           price_unit: 'hour',
           capacity: 20,
-          status: 'active',
-          is_featured: true
+          status: 'pending_approval',
+          is_featured: false
         })
         .select()
         .single()
@@ -237,7 +610,8 @@ export default function AdminPage() {
         'facility_facilities',
         'facility_images',
         'facility_amenities',
-        'facility_features'
+        'facility_features',
+        'facility_reviews'
       ]
       
       const results = []
@@ -260,6 +634,25 @@ export default function AdminPage() {
     } finally {
       setLoading(false)
     }
+  }
+
+
+
+  // Show loading while checking authentication
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading...</p>
+        </div>
+      </div>
+    )
+  }
+
+  // Redirect to login if not authenticated
+  if (!user) {
+    return null
   }
 
   return (
@@ -329,8 +722,11 @@ export default function AdminPage() {
                   {pendingFacilities.map((facility) => {
                     const primaryImage = facility.facility_images?.find(img => img.is_primary)?.image_url || 
                                        facility.facility_images?.[0]?.image_url
-                    
-                    console.log('Facility:', facility.name, 'Images:', facility.facility_images, 'Primary Image:', primaryImage)
+                    const isExpanded = expandedFacility === facility.id
+                    const hasFeedback = hasAnyFeedback(facility.id)
+                    const allApproved = areAllSectionsApproved(facility.id)
+                    const alreadyRejected = isAlreadyRejected(facility.id)
+                    const review = facilityReviews[facility.id] || initializeReview(facility.id)
                     
                     return (
                     <div key={facility.id} className="border border-gray-200 rounded-lg p-6">
@@ -346,15 +742,10 @@ export default function AdminPage() {
                                 sizes="96px"
                                 onError={(e) => {
                                   console.error('Image failed to load:', primaryImage)
-                                  console.error('Error details:', e)
-                                  // Hide the broken image and show fallback
                                   const parent = e.currentTarget.parentElement
                                   if (parent) {
                                     parent.innerHTML = '<div class="text-gray-400 text-xs text-center">Image Failed</div>'
                                   }
-                                }}
-                                onLoad={() => {
-                                  console.log('Image loaded successfully:', primaryImage)
                                 }}
                               />
                             ) : (
@@ -366,26 +757,64 @@ export default function AdminPage() {
                           <div>
                             <h3 className="text-lg font-semibold text-gray-900">{facility.name}</h3>
                             <p className="text-sm text-gray-600">{facility.type}</p>
+                            {facility.status === 'needs_changes' && (
+                              <div className="flex items-center mt-1">
+                                <AlertCircle className="w-4 h-4 text-orange-500 mr-1" />
+                                <span className="text-sm text-orange-600">Needs Changes</span>
+                              </div>
+                            )}
                           </div>
                         </div>
                         <div className="flex space-x-2">
                           <button
-                            onClick={() => updateFacilityStatus(facility.id, 'active')}
-                            className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+                            onClick={() => setExpandedFacility(isExpanded ? null : facility.id)}
+                            className="inline-flex items-center px-3 py-2 border border-gray-300 text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+                          >
+                            <MessageSquare className="w-4 h-4 mr-1" />
+                            {isExpanded ? 'Hide Details' : 'Review Details'}
+                          </button>
+                          <button
+                            onClick={() => approveFacility(facility.id)}
+                            disabled={!allApproved}
+                            className={`inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white focus:outline-none focus:ring-2 focus:ring-offset-2 ${
+                              allApproved 
+                                ? 'bg-green-600 hover:bg-green-700 focus:ring-green-500' 
+                                : 'bg-gray-400 cursor-not-allowed'
+                            }`}
+                            title={!allApproved ? 'All sections must be approved and previous feedback must be marked as addressed before accepting' : ''}
                           >
                             <CheckCircle className="w-4 h-4 mr-1" />
                             Approve
                           </button>
                           <button
-                            onClick={() => updateFacilityStatus(facility.id, 'rejected')}
-                            className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                            onClick={() => rejectFacility(facility.id)}
+                            disabled={!hasFeedback || alreadyRejected || allApproved}
+                            className={`inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white focus:outline-none focus:ring-2 focus:ring-offset-2 ${
+                              alreadyRejected
+                                ? 'bg-orange-500 cursor-not-allowed'
+                                : allApproved
+                                ? 'bg-gray-400 cursor-not-allowed'
+                                : hasFeedback 
+                                ? 'bg-red-600 hover:bg-red-700 focus:ring-red-500' 
+                                : 'bg-gray-400 cursor-not-allowed'
+                            }`}
+                            title={
+                              alreadyRejected 
+                                ? 'Facility has already been sent back to user' 
+                                : allApproved
+                                ? 'Cannot reject when all sections are approved'
+                                : !hasFeedback 
+                                ? 'Provide feedback before rejecting' 
+                                : ''
+                            }
                           >
                             <XCircle className="w-4 h-4 mr-1" />
-                            Reject
+                            {alreadyRejected ? 'Sent Back to User' : 'Reject'}
                           </button>
                         </div>
                       </div>
 
+                      {/* Basic Info Summary */}
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                         <div>
                           <h4 className="font-medium text-gray-900 mb-2">Facility Details</h4>
@@ -419,12 +848,273 @@ export default function AdminPage() {
                         </div>
                       </div>
 
-                      {facility.description && (
-                        <div>
-                          <h4 className="font-medium text-gray-900 mb-2">Description</h4>
-                          <p className="text-sm text-gray-600 bg-gray-50 p-3 rounded">
-                            {facility.description}
-                          </p>
+                      {/* Detailed Review Sections */}
+                      {isExpanded && (
+                        <div className="border-t pt-6 mt-6">
+                          {/* Show changes if this is a resubmission */}
+                          {review.previous_review_id && (
+                            <div className="mb-6">
+                              <ChangeTracker 
+                                facilityId={facility.id} 
+                                previousReviewId={review.previous_review_id} 
+                              />
+                            </div>
+                          )}
+                          <h3 className="text-lg font-semibold text-gray-900 mb-4">Detailed Review</h3>
+                          
+                          <ReviewSection
+                            title="Basic Information"
+                            facilityId={facility.id}
+                            fieldPrefix="basic_info"
+                            facilityReviews={facilityReviews}
+                            updateReviewField={updateReviewField}
+                            initializeReview={initializeReview}
+                            content={
+                              <div className="text-sm text-gray-600 space-y-1">
+                                <p><strong>Name:</strong> {facility.name}</p>
+                                <p><strong>Type:</strong> {facility.type}</p>
+                                <p><strong>Capacity:</strong> {facility.capacity} people</p>
+                              </div>
+                            }
+                          />
+
+                          <ReviewSection
+                            title="Description"
+                            facilityId={facility.id}
+                            fieldPrefix="description"
+                            facilityReviews={facilityReviews}
+                            updateReviewField={updateReviewField}
+                            initializeReview={initializeReview}
+                            content={
+                              <div className="text-sm text-gray-600 bg-gray-50 p-3 rounded">
+                                {facility.description || 'No description provided'}
+                              </div>
+                            }
+                          />
+
+                          <ReviewSection
+                            title="Location"
+                            facilityId={facility.id}
+                            fieldPrefix="location"
+                            facilityReviews={facilityReviews}
+                            updateReviewField={updateReviewField}
+                            initializeReview={initializeReview}
+                            content={
+                              <div className="text-sm text-gray-600 space-y-1">
+                                <p><strong>Address:</strong> {facility.address}</p>
+                                <p><strong>City:</strong> {facility.city}</p>
+                                <p><strong>State:</strong> {facility.state}</p>
+                                <p><strong>ZIP:</strong> {facility.zip_code}</p>
+                              </div>
+                            }
+                          />
+
+                          <ReviewSection
+                            title="Pricing & Booking"
+                            facilityId={facility.id}
+                            fieldPrefix="pricing"
+                            facilityReviews={facilityReviews}
+                            updateReviewField={updateReviewField}
+                            initializeReview={initializeReview}
+                            content={
+                              <div className="text-sm text-gray-600 space-y-1">
+                                <p><strong>Price:</strong> ${facility.price}/{facility.price_unit}</p>
+                                {facility.min_booking_duration && (
+                                  <p><strong>Min Duration:</strong> {facility.min_booking_duration} hours</p>
+                                )}
+                                {facility.max_booking_duration && (
+                                  <p><strong>Max Duration:</strong> {facility.max_booking_duration} hours</p>
+                                )}
+                                {facility.advance_booking_days && (
+                                  <p><strong>Advance Booking:</strong> {facility.advance_booking_days} days</p>
+                                )}
+                              </div>
+                            }
+                          />
+
+                          <ReviewSection
+                            title="Amenities"
+                            facilityId={facility.id}
+                            fieldPrefix="amenities"
+                            facilityReviews={facilityReviews}
+                            updateReviewField={updateReviewField}
+                            initializeReview={initializeReview}
+                            content={
+                              <div className="text-sm text-gray-600">
+                                {facility.facility_amenities && facility.facility_amenities.length > 0 ? (
+                                  <div className="flex flex-wrap gap-2">
+                                    {facility.facility_amenities.map((amenity, index) => (
+                                      <span key={index} className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs">
+                                        {amenity.name}
+                                      </span>
+                                    ))}
+                                  </div>
+                                ) : (
+                                  <p>No amenities listed</p>
+                                )}
+                              </div>
+                            }
+                          />
+
+                          <ReviewSection
+                            title="Features"
+                            facilityId={facility.id}
+                            fieldPrefix="features"
+                            facilityReviews={facilityReviews}
+                            updateReviewField={updateReviewField}
+                            initializeReview={initializeReview}
+                            content={
+                              <div className="text-sm text-gray-600">
+                                {facility.facility_features && facility.facility_features.length > 0 ? (
+                                  <div className="flex flex-wrap gap-2">
+                                    {facility.facility_features.map((feature, index) => (
+                                      <span key={index} className="bg-green-100 text-green-800 px-2 py-1 rounded text-xs">
+                                        {feature.name}
+                                      </span>
+                                    ))}
+                                  </div>
+                                ) : (
+                                  <p>No features listed</p>
+                                )}
+                              </div>
+                            }
+                          />
+
+                          <ReviewSection
+                            title="Images"
+                            facilityId={facility.id}
+                            fieldPrefix="images"
+                            facilityReviews={facilityReviews}
+                            updateReviewField={updateReviewField}
+                            initializeReview={initializeReview}
+                            content={
+                              <div className="text-sm text-gray-600">
+                                {facility.facility_images && facility.facility_images.length > 0 ? (
+                                  <div className="grid grid-cols-4 gap-2">
+                                    {facility.facility_images.map((image, index) => (
+                                      <div key={index} className="relative w-20 h-20 rounded overflow-hidden bg-gray-100">
+                                        <Image
+                                          src={image.image_url}
+                                          alt={`Facility image ${index + 1}`}
+                                          fill
+                                          className="object-cover"
+                                          sizes="80px"
+                                        />
+                                        {image.is_primary && (
+                                          <div className="absolute top-1 left-1 bg-blue-500 text-white text-xs px-1 rounded">
+                                            Primary
+                                          </div>
+                                        )}
+                                      </div>
+                                    ))}
+                                  </div>
+                                ) : (
+                                  <p>No images uploaded</p>
+                                )}
+                              </div>
+                            }
+                          />
+
+                          <ReviewSection
+                            title="Policies"
+                            facilityId={facility.id}
+                            fieldPrefix="policies"
+                            facilityReviews={facilityReviews}
+                            updateReviewField={updateReviewField}
+                            initializeReview={initializeReview}
+                            content={
+                              <div className="text-sm text-gray-600 space-y-2">
+                                {facility.cancellation_policy && (
+                                  <div>
+                                    <strong>Cancellation Policy:</strong>
+                                    <p className="bg-gray-50 p-2 rounded mt-1">{facility.cancellation_policy}</p>
+                                  </div>
+                                )}
+                                {facility.house_rules && (
+                                  <div>
+                                    <strong>House Rules:</strong>
+                                    <p className="bg-gray-50 p-2 rounded mt-1">{facility.house_rules}</p>
+                                  </div>
+                                )}
+                                {!facility.cancellation_policy && !facility.house_rules && (
+                                  <p>No policies specified</p>
+                                )}
+                              </div>
+                            }
+                          />
+
+                          {/* Availability Section - Only show if we have availability data */}
+                          <ReviewSection
+                            title="Availability & Schedule"
+                            facilityId={facility.id}
+                            fieldPrefix="availability"
+                            facilityReviews={facilityReviews}
+                            updateReviewField={updateReviewField}
+                            initializeReview={initializeReview}
+                            content={
+                              <div className="text-sm text-gray-600 space-y-3">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                  <div>
+                                    <strong>Booking Settings:</strong>
+                                    <div className="bg-gray-50 p-2 rounded mt-1 space-y-1">
+                                      {facility.availability_increment && (
+                                        <p><span className="font-medium">Time Increment:</span> {facility.availability_increment} minutes</p>
+                                      )}
+                                      {facility.minimum_rental_duration && (
+                                        <p><span className="font-medium">Min Duration:</span> {facility.minimum_rental_duration} hours</p>
+                                      )}
+                                      {facility.availability_timezone && (
+                                        <p><span className="font-medium">Timezone:</span> {facility.availability_timezone}</p>
+                                      )}
+                                    </div>
+                                  </div>
+                                  <div>
+                                    <strong>Weekly Schedule:</strong>
+                                    <div className="bg-gray-50 p-2 rounded mt-1">
+                                      {facility.facility_default_availability && facility.facility_default_availability.length > 0 ? (
+                                        <div className="space-y-1">
+                                          {['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'].map((day, index) => {
+                                            const daySlots = facility.facility_default_availability?.filter(slot => slot.day_of_week === index && slot.is_available) || []
+                                            return (
+                                              <div key={day} className="flex justify-between text-xs">
+                                                <span className="font-medium">{day}:</span>
+                                                <span>
+                                                  {daySlots.length > 0 
+                                                    ? daySlots.map(slot => `${slot.start_time}-${slot.end_time}`).join(', ')
+                                                    : 'Closed'
+                                                  }
+                                                </span>
+                                              </div>
+                                            )
+                                          })}
+                                        </div>
+                                      ) : (
+                                        <p className="text-xs">No schedule configured</p>
+                                      )}
+                                    </div>
+                                  </div>
+                                </div>
+                                {facility.availability_notes && (
+                                  <div>
+                                    <strong>Availability Notes:</strong>
+                                    <p className="bg-gray-50 p-2 rounded mt-1">{facility.availability_notes}</p>
+                                  </div>
+                                )}
+                              </div>
+                            }
+                          />
+
+                          {/* General Comments */}
+                          <div className="border border-gray-200 rounded-lg p-4">
+                            <h4 className="font-medium text-gray-900 mb-3">General Comments</h4>
+                            <textarea
+                              placeholder="Overall feedback for the facility owner..."
+                              value={facilityReviews[facility.id]?.general_comments || ''}
+                              onChange={(e) => updateReviewField(facility.id, 'general_comments', e.target.value)}
+                              className="w-full text-sm border border-gray-300 rounded px-3 py-2 resize-none"
+                              rows={3}
+                            />
+                          </div>
                         </div>
                       )}
                     </div>

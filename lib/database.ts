@@ -4,7 +4,7 @@ import type {
   FacilityCategory, 
   FacilityUser, 
   FacilityBooking, 
-  FacilityReview,
+  FacilityReview as FacilityReviewType,
   FacilityImage,
   FacilityAmenity,
   FacilityFeature
@@ -48,7 +48,8 @@ export async function getFacilities(options?: {
   if (options?.status) {
     query = query.eq('status', options.status)
   } else {
-    query = query.eq('status', 'active') // Default to active facilities
+    // Temporarily show all facilities to debug
+    // query = query.eq('status', 'active') // Default to active facilities
   }
 
   if (options?.featured) {
@@ -121,9 +122,14 @@ export async function createFacility(facility: {
   cancellation_policy?: string
   house_rules?: string
 }): Promise<Facility | null> {
+  const facilityData = {
+    ...facility,
+    is_active: false // New facilities start as inactive until approved and owner makes them active
+  }
+  
   const { data, error } = await supabase
     .from('facility_facilities')
-    .insert(facility)
+    .insert(facilityData)
     .select()
     .single()
 
@@ -133,6 +139,28 @@ export async function createFacility(facility: {
   }
 
   return data
+}
+
+export async function getFacilitiesByOwner(ownerId: string): Promise<Facility[]> {
+  const { data, error } = await supabase
+    .from('facility_facilities')
+    .select(`
+      *,
+      owner:facility_users!facility_facilities_owner_id_fkey(*),
+      category:facility_categories!facility_facilities_category_id_fkey(*),
+      images:facility_images(*),
+      amenities:facility_amenities(*),
+      features:facility_features(*)
+    `)
+    .eq('owner_id', ownerId)
+    .order('created_at', { ascending: false })
+
+  if (error) {
+    console.error('Error fetching facilities by owner:', error)
+    return []
+  }
+
+  return data || []
 }
 
 export async function updateFacility(id: string, updates: Partial<Facility>): Promise<Facility | null> {
@@ -149,6 +177,20 @@ export async function updateFacility(id: string, updates: Partial<Facility>): Pr
   }
 
   return data
+}
+
+export async function toggleFacilityVisibility(facilityId: string, isActive: boolean): Promise<boolean> {
+  const { error } = await supabase
+    .from('facility_facilities')
+    .update({ is_active: isActive })
+    .eq('id', facilityId)
+
+  if (error) {
+    console.error('Error toggling facility visibility:', error)
+    return false
+  }
+
+  return true
 }
 
 // Facility Images
@@ -234,7 +276,7 @@ export async function getFacilityUserByAuthId(authId: string): Promise<FacilityU
     .from('facility_users')
     .select('*')
     .eq('auth_user_id', authId)
-    .single()
+    .maybeSingle()
 
   console.log('getFacilityUserByAuthId result - data:', data, 'error:', error)
 
@@ -389,7 +431,7 @@ export async function updateBookingStatus(
 }
 
 // Reviews
-export async function getFacilityReviews(facilityId: string): Promise<FacilityReview[]> {
+export async function getFacilityReviews(facilityId: string): Promise<FacilityReviewType[]> {
   const { data, error } = await supabase
     .from('facility_reviews')
     .select(`
@@ -414,7 +456,7 @@ export async function createReview(review: {
   booking_id?: string
   rating: number
   comment?: string
-}): Promise<FacilityReview | null> {
+}): Promise<FacilityReviewType | null> {
   const { data, error } = await supabase
     .from('facility_reviews')
     .insert(review)
@@ -453,7 +495,8 @@ export async function searchFacilities(query: {
       amenities:facility_amenities(*),
       features:facility_features(*)
     `)
-    .eq('status', 'active')
+    .eq('status', 'approved')
+    .eq('is_active', true)
 
   // Text search
   if (query.search) {
@@ -624,4 +667,335 @@ export async function createFacilityFeatures(facilityId: string, features: strin
   if (error) {
     console.error('Error creating facility features:', error)
   }
+}
+
+// Delete facility image
+export async function deleteFacilityImage(imageId: string): Promise<void> {
+  try {
+    // First get the image record to get the file path
+    const { data: imageRecord, error: fetchError } = await supabase
+      .from('facility_images')
+      .select('image_url')
+      .eq('id', imageId)
+      .single()
+
+    if (fetchError) {
+      console.error('Error fetching image record:', fetchError)
+      return
+    }
+
+    // Extract the file path from the URL
+    if (imageRecord?.image_url) {
+      const url = new URL(imageRecord.image_url)
+      const filePath = url.pathname.split('/').slice(-2).join('/') // Get the last two parts (facilityId/filename)
+      
+      // Delete from storage
+      const { error: storageError } = await supabase.storage
+        .from('facility-images')
+        .remove([filePath])
+
+      if (storageError) {
+        console.error('Error deleting image from storage:', storageError)
+      }
+    }
+
+    // Delete the database record
+    const { error: dbError } = await supabase
+      .from('facility_images')
+      .delete()
+      .eq('id', imageId)
+
+    if (dbError) {
+      console.error('Error deleting image record:', dbError)
+    }
+  } catch (error) {
+    console.error('Error in deleteFacilityImage:', error)
+  }
+}
+
+// Update facility amenities (replace existing)
+export async function updateFacilityAmenities(facilityId: string, amenities: string[]): Promise<void> {
+  try {
+    // Delete existing amenities
+    await supabase
+      .from('facility_amenities')
+      .delete()
+      .eq('facility_id', facilityId)
+
+    // Create new amenities
+    if (amenities.length > 0) {
+      await createFacilityAmenities(facilityId, amenities)
+    }
+  } catch (error) {
+    console.error('Error updating facility amenities:', error)
+  }
+}
+
+// Update facility features (replace existing)
+export async function updateFacilityFeatures(facilityId: string, features: string[]): Promise<void> {
+  try {
+    // Delete existing features
+    await supabase
+      .from('facility_features')
+      .delete()
+      .eq('facility_id', facilityId)
+
+    // Create new features
+    if (features.length > 0) {
+      await createFacilityFeatures(facilityId, features)
+    }
+  } catch (error) {
+    console.error('Error updating facility features:', error)
+  }
+}
+
+// Get facility categories
+export async function getFacilityCategories(facilityId: string): Promise<string[]> {
+  try {
+    const { data, error } = await supabase
+      .from('facility_category_assignments')
+      .select('category_id')
+      .eq('facility_id', facilityId)
+
+    if (error) {
+      console.error('Error fetching facility categories:', error)
+      return []
+    }
+
+    return data?.map(item => item.category_id) || []
+  } catch (error) {
+    console.error('Error in getFacilityCategories:', error)
+    return []
+  }
+}
+
+// Update facility category assignments (replace existing)
+export async function updateFacilityCategoryAssignments(facilityId: string, categoryIds: string[]): Promise<void> {
+  try {
+    // Delete existing assignments
+    await supabase
+      .from('facility_category_assignments')
+      .delete()
+      .eq('facility_id', facilityId)
+
+    // Create new assignments
+    if (categoryIds.length > 0) {
+      await createFacilityCategoryAssignments(facilityId, categoryIds)
+    }
+  } catch (error) {
+    console.error('Error updating facility category assignments:', error)
+  }
+}
+
+// Create facility category assignments
+export async function createFacilityCategoryAssignments(facilityId: string, categoryIds: string[]): Promise<void> {
+  if (categoryIds.length === 0) return
+
+  const assignmentRecords = categoryIds.map((categoryId, index) => ({
+    facility_id: facilityId,
+    category_id: categoryId,
+    is_primary: index === 0 // First category is primary
+  }))
+
+  const { error } = await supabase
+    .from('facility_category_assignments')
+    .insert(assignmentRecords)
+
+  if (error) {
+    console.error('Error creating facility category assignments:', error)
+    throw error
+  }
+}
+
+// Admin Review Functions
+export async function getFacilitiesForReview(): Promise<Facility[]> {
+  const { data, error } = await supabase
+    .from('facility_facilities')
+    .select(`
+      *,
+      facility_users:owner_id (
+        first_name,
+        last_name,
+        email
+      ),
+      facility_images (
+        image_url,
+        is_primary
+      ),
+      facility_amenities (
+        name,
+        icon_name
+      ),
+      facility_features (
+        name
+      )
+    `)
+    .in('status', ['pending_approval', 'needs_changes'])
+    .order('created_at', { ascending: true })
+
+  if (error) {
+    console.error('Error fetching facilities for review:', error)
+    return []
+  }
+
+  return data || []
+}
+
+export async function getFacilityReview(facilityId: string): Promise<FacilityReviewType | null> {
+  const { data, error } = await supabase
+    .from('facility_reviews')
+    .select(`
+      *,
+      facility:facility_facilities(*),
+      reviewer:facility_users!reviewer_id(*)
+    `)
+    .eq('facility_id', facilityId)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .single()
+
+  if (error) {
+    console.error('Error fetching facility review:', error)
+    return null
+  }
+
+  return data
+}
+
+export async function createFacilityReview(review: {
+  facility_id: string
+  reviewer_id: string
+  status: 'pending' | 'approved' | 'needs_changes'
+  basic_info_status?: 'approved' | 'needs_changes' | 'pending'
+  basic_info_comments?: string
+  description_status?: 'approved' | 'needs_changes' | 'pending'
+  description_comments?: string
+  location_status?: 'approved' | 'needs_changes' | 'pending'
+  location_comments?: string
+  pricing_status?: 'approved' | 'needs_changes' | 'pending'
+  pricing_comments?: string
+  amenities_status?: 'approved' | 'needs_changes' | 'pending'
+  amenities_comments?: string
+  features_status?: 'approved' | 'needs_changes' | 'pending'
+  features_comments?: string
+  images_status?: 'approved' | 'needs_changes' | 'pending'
+  images_comments?: string
+  policies_status?: 'approved' | 'needs_changes' | 'pending'
+  policies_comments?: string
+  general_comments?: string
+  internal_notes?: string
+}): Promise<FacilityReviewType | null> {
+  const { data, error } = await supabase
+    .from('facility_reviews')
+    .insert(review)
+    .select()
+    .single()
+
+  if (error) {
+    console.error('Error creating facility review:', error)
+    return null
+  }
+
+  // Update facility status based on review status
+  if (review.status === 'approved') {
+    await supabase
+      .from('facility_facilities')
+      .update({ status: 'active' })
+      .eq('id', review.facility_id)
+  } else if (review.status === 'needs_changes') {
+    await supabase
+      .from('facility_facilities')
+      .update({ status: 'needs_changes' })
+      .eq('id', review.facility_id)
+  }
+
+  return data
+}
+
+export async function updateFacilityReview(
+  reviewId: string,
+  updates: Partial<FacilityReviewType>
+): Promise<FacilityReviewType | null> {
+  const { data, error } = await supabase
+    .from('facility_reviews')
+    .update(updates)
+    .eq('id', reviewId)
+    .select()
+    .single()
+
+  if (error) {
+    console.error('Error updating facility review:', error)
+    return null
+  }
+
+  // Update facility status if review status changed
+  if (updates.status) {
+    if (updates.status === 'approved') {
+      await supabase
+        .from('facility_facilities')
+        .update({ status: 'active' })
+        .eq('id', data.facility_id)
+    } else if (updates.status === 'needs_changes') {
+      await supabase
+        .from('facility_facilities')
+        .update({ status: 'needs_changes' })
+        .eq('id', data.facility_id)
+    }
+  }
+
+  return data
+}
+
+export async function getFacilityWithReview(facilityId: string): Promise<{
+  facility: Facility | null
+  review: FacilityReviewType | null
+}> {
+  // Get facility details
+  const { data: facility, error: facilityError } = await supabase
+    .from('facility_facilities')
+    .select(`
+      *,
+      facility_users:owner_id (
+        first_name,
+        last_name,
+        email
+      ),
+      facility_images (
+        image_url,
+        is_primary,
+        alt_text
+      ),
+      facility_amenities (
+        name,
+        icon_name
+      ),
+      facility_features (
+        name
+      )
+    `)
+    .eq('id', facilityId)
+    .single()
+
+  if (facilityError) {
+    console.error('Error fetching facility:', facilityError)
+    return { facility: null, review: null }
+  }
+
+  // Get latest review
+  const { data: review, error: reviewError } = await supabase
+    .from('facility_reviews')
+    .select(`
+      *,
+      reviewer:facility_users!reviewer_id(*)
+    `)
+    .eq('facility_id', facilityId)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+
+  if (reviewError) {
+    console.error('Error fetching facility review:', reviewError)
+  }
+
+  return { facility, review }
 }

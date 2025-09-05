@@ -38,6 +38,9 @@ export default function Header() {
           <div className="hidden md:flex items-center space-x-4">
             {user ? (
               <>
+                <Link href="/dashboard" className="text-gray-700 hover:text-primary-600 transition-colors">
+                  Dashboard
+                </Link>
                 <span className="text-gray-700">
                   Welcome, {facilityUser?.first_name || user.email}
                   {user && !facilityUser?.first_name && (
@@ -107,6 +110,13 @@ export default function Header() {
               <div className="flex flex-col space-y-2 pt-4 border-t">
                 {user ? (
                   <>
+                    <Link 
+                      href="/dashboard" 
+                      className="text-gray-700 hover:text-primary-600 transition-colors"
+                      onClick={() => setIsMenuOpen(false)}
+                    >
+                      Dashboard
+                    </Link>
                     <span className="text-gray-700">
                       Welcome, {facilityUser?.first_name || user.email}
                       {user && !facilityUser?.first_name && (

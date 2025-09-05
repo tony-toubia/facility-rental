@@ -59,7 +59,8 @@ export interface Facility {
   advance_booking_days: number | null
   cancellation_policy: string | null
   house_rules: string | null
-  status: 'active' | 'inactive' | 'pending_approval' | 'suspended'
+  status: 'active' | 'inactive' | 'pending_approval' | 'suspended' | 'pending_review' | 'needs_changes' | 'approved'
+  is_active: boolean
   is_featured: boolean | null
   rating: number | null
   review_count: number | null
@@ -122,7 +123,7 @@ export interface FacilityBooking {
   user?: FacilityUser
 }
 
-export interface FacilityReview {
+export interface FacilityUserReview {
   id: string
   facility_id: string
   user_id: string
@@ -138,6 +139,54 @@ export interface FacilityReview {
   user?: FacilityUser
   facility?: Facility
   booking?: FacilityBooking
+}
+
+export interface FacilityReviewSection {
+  status: 'approved' | 'needs_changes' | 'pending'
+  comments?: string
+}
+
+export interface FacilityReview {
+  id: string
+  facility_id: string
+  reviewer_id: string | null
+  status: 'pending' | 'approved' | 'needs_changes'
+  
+  // Section-by-section review fields
+  basic_info_status: 'approved' | 'needs_changes' | 'pending'
+  basic_info_comments?: string
+  
+  description_status: 'approved' | 'needs_changes' | 'pending'
+  description_comments?: string
+  
+  location_status: 'approved' | 'needs_changes' | 'pending'
+  location_comments?: string
+  
+  pricing_status: 'approved' | 'needs_changes' | 'pending'
+  pricing_comments?: string
+  
+  amenities_status: 'approved' | 'needs_changes' | 'pending'
+  amenities_comments?: string
+  
+  features_status: 'approved' | 'needs_changes' | 'pending'
+  features_comments?: string
+  
+  images_status: 'approved' | 'needs_changes' | 'pending'
+  images_comments?: string
+  
+  policies_status: 'approved' | 'needs_changes' | 'pending'
+  policies_comments?: string
+  
+  // Overall review comments
+  general_comments?: string
+  internal_notes?: string
+  
+  created_at: string | null
+  updated_at: string | null
+  
+  // Relations
+  facility?: Facility
+  reviewer?: FacilityUser
 }
 
 // Legacy interfaces for backward compatibility (can be removed later)
