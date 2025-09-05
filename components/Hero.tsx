@@ -1,16 +1,18 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { Search, MapPin, Calendar } from 'lucide-react'
+import { Search, MapPin, Calendar, Navigation } from 'lucide-react'
 import LocationAutocompleteNew from './LocationAutocompleteNew'
-import { LocationData } from '@/lib/geolocation-new'
+import { LocationData, getBrowserLocation } from '@/lib/geolocation-new'
 
 export default function Hero() {
   const router = useRouter()
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedLocation, setSelectedLocation] = useState<LocationData | null>(null)
   const [date, setDate] = useState('')
+  const [isLoadingLocation, setIsLoadingLocation] = useState(false)
+  const [hasRequestedLocation, setHasRequestedLocation] = useState(false)
 
   const handleLocationSelect = useCallback((location: LocationData) => {
     setSelectedLocation(location)
@@ -19,6 +21,40 @@ export default function Hero() {
   const handleLocationClear = useCallback(() => {
     setSelectedLocation(null)
   }, [])
+
+  // Request location permission on component mount
+  useEffect(() => {
+    const requestLocationPermission = async () => {
+      // Check if we've already requested location or if user has already set a location
+      if (hasRequestedLocation || selectedLocation) return
+
+      // Check if geolocation is supported
+      if (!navigator.geolocation) return
+
+      try {
+        setHasRequestedLocation(true)
+        setIsLoadingLocation(true)
+        
+        console.log('Requesting location permission on home page...')
+        const location = await getBrowserLocation()
+        
+        if (location) {
+          console.log('Location obtained:', location)
+          setSelectedLocation(location)
+        } else {
+          console.log('Location permission denied or failed')
+        }
+      } catch (error) {
+        console.log('Error requesting location:', error)
+      } finally {
+        setIsLoadingLocation(false)
+      }
+    }
+
+    // Small delay to avoid requesting permission immediately on page load
+    const timer = setTimeout(requestLocationPermission, 1000)
+    return () => clearTimeout(timer)
+  }, [hasRequestedLocation, selectedLocation])
 
   const formatLocationDisplay = (location: LocationData) => {
     if (location.city && location.state) {
@@ -101,14 +137,44 @@ export default function Hero() {
                 <label htmlFor="location" className="block text-sm font-medium text-gray-700 mb-2">
                   Where?
                 </label>
-                <LocationAutocompleteNew
-                  onLocationSelect={handleLocationSelect}
-                  onClear={handleLocationClear}
-                  placeholder="City, ZIP code"
-                  value={selectedLocation ? formatLocationDisplay(selectedLocation) : ''}
-                  showClearButton={!!selectedLocation}
-                  className="w-full"
-                />
+                <div className="flex gap-2">
+                  <div className="flex-1">
+                    <LocationAutocompleteNew
+                      onLocationSelect={handleLocationSelect}
+                      onClear={handleLocationClear}
+                      placeholder={isLoadingLocation ? "Getting your location..." : "City, ZIP code"}
+                      value={selectedLocation ? formatLocationDisplay(selectedLocation) : ''}
+                      showClearButton={!!selectedLocation}
+                      className="w-full"
+                      disabled={isLoadingLocation}
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      setIsLoadingLocation(true)
+                      try {
+                        const location = await getBrowserLocation()
+                        if (location) {
+                          setSelectedLocation(location)
+                        }
+                      } catch (error) {
+                        console.log('Error getting location:', error)
+                      } finally {
+                        setIsLoadingLocation(false)
+                      }
+                    }}
+                    disabled={isLoadingLocation}
+                    className="px-3 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center min-w-[44px]"
+                    title="Use my current location"
+                  >
+                    {isLoadingLocation ? (
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    ) : (
+                      <Navigation className="w-4 h-4" />
+                    )}
+                  </button>
+                </div>
               </div>
 
               {/* When */}

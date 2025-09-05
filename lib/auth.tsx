@@ -1,6 +1,6 @@
 'use client'
 
-import { createContext, useContext, useEffect, useState } from 'react'
+import { createContext, useContext, useEffect, useState, useRef } from 'react'
 import { User } from '@supabase/supabase-js'
 import { supabase } from './supabase'
 import { FacilityUser } from '@/types'
@@ -29,6 +29,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [facilityUser, setFacilityUser] = useState<FacilityUser | null>(null)
   const [loading, setLoading] = useState(true)
+  const hasCheckedInitialSession = useRef(false)
 
   useEffect(() => {
     // Check if we just signed out (from URL parameter)
@@ -51,8 +52,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return
     }
 
-    // Get initial session with more robust checking
+    // Only check initial session once when the auth provider mounts
     const checkInitialSession = async () => {
+      if (hasCheckedInitialSession.current) return
+      hasCheckedInitialSession.current = true
+      
       console.log('Checking initial session...')
 
       try {
@@ -137,15 +141,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Prevent duplicate loading for the same user
     if (facilityUser && facilityUser.auth_user_id === authUserId) {
       console.log('Auth: Facility user already loaded for this auth ID, skipping...')
+      setLoading(false) // Ensure loading is false
       return
     }
 
     try {
       console.log('Auth: Loading facility user for auth ID:', authUserId)
       
-      // Reduce timeout to 5 seconds to fail faster
+      // Reduce timeout to 3 seconds to fail faster and not hang UI
       const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Facility user loading timeout')), 5000)
+        setTimeout(() => reject(new Error('Facility user loading timeout')), 3000)
       )
       
       const loadPromise = getFacilityUserByAuthId(authUserId)

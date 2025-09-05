@@ -7,7 +7,7 @@ import { useAuth } from '@/lib/auth'
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
-  const { user, facilityUser, signOut, refreshFacilityUser } = useAuth()
+  const { user, facilityUser, loading, signOut, refreshFacilityUser } = useAuth()
 
   return (
     <header className="bg-white shadow-sm border-b">
@@ -43,7 +43,7 @@ export default function Header() {
                 </Link>
                 <span className="text-gray-700">
                   Welcome, {facilityUser?.first_name || user?.email?.split('@')[0] || 'User'}
-                  {user && !facilityUser && (
+                  {user && !facilityUser && loading && (
                     <span className="ml-1 text-xs text-gray-500">(loading profile...)</span>
                   )}
                   {user && !facilityUser?.first_name && facilityUser && (
@@ -125,7 +125,7 @@ export default function Header() {
                     </Link>
                     <span className="text-gray-700">
                       Welcome, {facilityUser?.first_name || user?.email?.split('@')[0] || 'User'}
-                      {user && !facilityUser && (
+                      {user && !facilityUser && loading && (
                         <span className="ml-1 text-xs text-gray-500">(loading profile...)</span>
                       )}
                       {user && !facilityUser?.first_name && facilityUser && (
