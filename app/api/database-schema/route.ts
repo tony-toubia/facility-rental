@@ -3,45 +3,55 @@ import { NextResponse } from 'next/server'
 
 export async function GET() {
   try {
-    // Get all tables in the public schema
-    const { data: tables, error: tablesError } = await supabase
-      .from('information_schema.tables')
-      .select('table_name')
-      .eq('table_schema', 'public')
-      .like('table_name', 'facility_%')
-
-    if (tablesError) {
-      console.error('Error fetching tables:', tablesError)
-      return NextResponse.json({ error: 'Failed to fetch database schema' }, { status: 500 })
-    }
+    // Supabase doesn't expose information_schema, so we'll use a different approach
+    // Try to query known facility tables directly
+    const knownTables = [
+      'facility_users',
+      'facility_categories',
+      'facility_facilities',
+      'facility_images',
+      'facility_amenities',
+      'facility_features',
+      'facility_availability',
+      'facility_bookings',
+      'facility_reviews',
+      'facility_favorites',
+      'facility_messages',
+      'facility_notifications',
+      'facility_transactions'
+    ]
 
     const schema: Record<string, any> = {}
+    const availableTables: string[] = []
 
-    // Get column information for each table
-    for (const table of tables || []) {
-      const { data: columns, error: columnsError } = await supabase
-        .from('information_schema.columns')
-        .select('column_name, data_type, is_nullable, column_default')
-        .eq('table_schema', 'public')
-        .eq('table_name', table.table_name)
-        .order('ordinal_position')
+    // Check each table and get basic info
+    for (const tableName of knownTables) {
+      try {
+        // Try to get a count from the table to verify it exists
+        const { count, error } = await supabase
+          .from(tableName)
+          .select('*', { count: 'exact', head: true })
 
-      if (columnsError) {
-        console.error(`Error fetching columns for ${table.table_name}:`, columnsError)
-        continue
-      }
-
-      schema[table.table_name] = {
-        columns: columns || [],
-        rowCount: 0 // Could be populated if needed
+        if (!error) {
+          availableTables.push(tableName)
+          schema[tableName] = {
+            exists: true,
+            rowCount: count || 0,
+            columns: [] // We can't easily get column info without information_schema
+          }
+        }
+      } catch (error) {
+        // Table doesn't exist or we don't have access
+        console.log(`Table ${tableName} not accessible:`, error)
       }
     }
 
     return NextResponse.json({
       success: true,
       schema,
-      tables: tables?.map(t => t.table_name) || [],
-      timestamp: new Date().toISOString()
+      tables: availableTables,
+      timestamp: new Date().toISOString(),
+      note: 'Column details not available due to Supabase restrictions'
     })
 
   } catch (error) {

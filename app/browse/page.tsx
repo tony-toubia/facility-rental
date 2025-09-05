@@ -11,6 +11,7 @@ import { getFacilitiesWithinRadius, getBrowserLocation, geocodeAddress, Location
 import LocationAutocompleteNew from '@/components/LocationAutocompleteNew'
 import CategoryCheckboxList from '@/components/CategoryCheckboxList'
 import { FACILITY_CATEGORIES } from '@/data/facility-categories'
+import { getFacilityCategories } from '@/lib/database'
 
 interface Facility {
   id: string
@@ -133,7 +134,7 @@ export default function BrowsePage() {
         if (error) {
           console.error('Error loading facilities with radius:', error)
           console.log('Falling back to loading all facilities...')
-          
+
           // Fallback to loading all facilities if PostGIS fails
           const { data: fallbackData, error: fallbackError } = await supabase
             .from('facility_facilities')
@@ -165,14 +166,46 @@ export default function BrowsePage() {
             setError(`Failed to load facilities: ${fallbackError.message}`)
           } else {
             console.log('Loaded all facilities as fallback:', fallbackData?.length)
-            setFacilities(fallbackData || [])
+            // Load categories for each facility
+            if (fallbackData && fallbackData.length > 0) {
+              const facilitiesWithCategories = await Promise.all(
+                fallbackData.map(async (facility) => {
+                  try {
+                    const categories = await getFacilityCategories(facility.id)
+                    return { ...facility, categories }
+                  } catch (error) {
+                    console.error(`Error loading categories for facility ${facility.id}:`, error)
+                    return { ...facility, categories: [] }
+                  }
+                })
+              )
+              setFacilities(facilitiesWithCategories)
+            } else {
+              setFacilities(fallbackData || [])
+            }
             if (fallbackData && fallbackData.length === 0) {
               setError('No facilities found. There may be no active facilities in the database yet.')
             }
           }
         } else {
           console.log('Loaded facilities with distance:', data?.length)
-          setFacilities(data || [])
+          // Load categories for each facility
+          if (data && data.length > 0) {
+            const facilitiesWithCategories = await Promise.all(
+              data.map(async (facility: any) => {
+                try {
+                  const categories = await getFacilityCategories(facility.id)
+                  return { ...facility, categories }
+                } catch (error) {
+                  console.error(`Error loading categories for facility ${facility.id}:`, error)
+                  return { ...facility, categories: [] }
+                }
+              })
+            )
+            setFacilities(facilitiesWithCategories)
+          } else {
+            setFacilities(data || [])
+          }
         }
       } else {
         // Fallback to loading all facilities
@@ -582,9 +615,9 @@ export default function BrowsePage() {
                   const features = facility.facility_features?.map(f => f.name) || []
                   const amenities = facility.facility_amenities?.map(a => a.name) || []
 
-                  // Only show the facility type as the category (most granular selection)
-                  const categories = []
-                  if (facility.type) {
+                  // Use loaded categories from database, fallback to facility.type
+                  const categories = facility.categories || []
+                  if (categories.length === 0 && facility.type) {
                     categories.push(facility.type)
                   }
 

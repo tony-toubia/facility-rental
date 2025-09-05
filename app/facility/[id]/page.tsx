@@ -7,6 +7,7 @@ import { Star, MapPin, Clock, DollarSign, Wifi, Car, Users, Shield, Calendar, Ch
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/lib/auth'
 import BookingAvailability from '@/components/BookingAvailability'
+import { getFacilityCategories } from '@/lib/database'
 
 interface Facility {
   id: string
@@ -53,6 +54,7 @@ interface Facility {
 export default function FacilityDetailPage({ params }: { params: { id: string } }) {
   const { user } = useAuth()
   const [facility, setFacility] = useState<Facility | null>(null)
+  const [categories, setCategories] = useState<string[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
@@ -108,6 +110,18 @@ export default function FacilityDetailPage({ params }: { params: { id: string } 
 
       console.log('Loaded facility:', data)
       setFacility(data)
+
+      // Load facility categories
+      try {
+        const facilityCategories = await getFacilityCategories(params.id)
+        setCategories(facilityCategories)
+      } catch (error) {
+        console.error('Error loading facility categories:', error)
+        // Fallback to facility.type if categories can't be loaded
+        if (data.type) {
+          setCategories([data.type])
+        }
+      }
     } catch (err) {
       console.error('Error:', err)
       setError('Failed to load facility details')
@@ -271,11 +285,25 @@ export default function FacilityDetailPage({ params }: { params: { id: string } 
 
               {/* Categories */}
               <div className="mb-4">
-                {facility.type && (
+                {categories.length > 0 && (
                   <div className="flex items-center space-x-2 flex-wrap gap-2">
-                    <span className="text-sm px-3 py-1 rounded-full bg-primary-100 text-primary-700 border border-primary-200 font-medium">
-                      {facility.type}
-                    </span>
+                    {categories.slice(0, 3).map((category, index) => (
+                      <span
+                        key={index}
+                        className={`text-sm px-3 py-1 rounded-full font-medium ${
+                          index === 0
+                            ? 'bg-primary-100 text-primary-700 border border-primary-200'
+                            : 'bg-blue-50 text-blue-600'
+                        }`}
+                      >
+                        {category}
+                      </span>
+                    ))}
+                    {categories.length > 3 && (
+                      <span className="text-sm px-3 py-1 rounded-full bg-gray-100 text-gray-600">
+                        +{categories.length - 3} more
+                      </span>
+                    )}
                   </div>
                 )}
               </div>

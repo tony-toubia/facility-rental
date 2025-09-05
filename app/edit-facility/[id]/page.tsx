@@ -208,7 +208,7 @@ export default function EditFacilityPage() {
       return
     }
     loadFacility()
-  }, [user, facilityUser, router, loadFacility])
+  }, [user, facilityUser, router])
 
   // Toggle functions for amenities and features
   const handleAmenityToggle = useCallback((amenity: string) => {
