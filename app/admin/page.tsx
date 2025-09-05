@@ -183,33 +183,32 @@ export default function AdminPage() {
   const [pendingFacilities, setPendingFacilities] = useState<Facility[]>([])
   const [expandedFacility, setExpandedFacility] = useState<string | null>(null)
   const [facilityReviews, setFacilityReviews] = useState<{[key: string]: FacilityReview}>({})
-  const [isLoading, setIsLoading] = useState(false) // Loading state for data operations only
+  const [isLoading, setIsLoading] = useState(true) // Start with loading true
   const [loading, setLoading] = useState(false) // For testing tab operations
   const facilitiesLoadedRef = useRef(false)
 
-  // Redirect to login only after auth loading is complete and no user found
-  useEffect(() => {
-    if (!authLoading && !user) {
-      router.push('/login')
-    }
-  }, [user, authLoading, router])
-
   // Load pending facilities when user is available and on review tab
   useEffect(() => {
+    if (!user || !facilityUser) {
+      router.push('/login')
+      return
+    }
+    
     const loadData = async () => {
-      if (user && facilityUser && activeTab === 'review' && !facilitiesLoadedRef.current) {
+      if (activeTab === 'review' && !facilitiesLoadedRef.current) {
         console.log('Admin: Loading pending facilities for authenticated user')
-        setIsLoading(true)
         try {
           await loadPendingFacilities()
         } finally {
           setIsLoading(false)
         }
+      } else {
+        setIsLoading(false)
       }
     }
     
     loadData()
-  }, [user, facilityUser, activeTab])
+  }, [user, facilityUser, router, activeTab])
 
   if (!user || !facilityUser) {
     return (
@@ -224,6 +223,15 @@ export default function AdminPage() {
             Sign In
           </button>
         </div>
+      </div>
+    )
+  }
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        <span className="ml-2 text-gray-600">Loading admin panel...</span>
       </div>
     )
   }
