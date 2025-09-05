@@ -177,7 +177,7 @@ const ReviewSection = ({
 
 export default function AdminPage() {
   const router = useRouter()
-  const { user, facilityUser } = useAuth()
+  const { user, facilityUser, loading: authLoading } = useAuth()
   const [message, setMessage] = useState('')
   const [activeTab, setActiveTab] = useState<'review' | 'testing'>('review')
   const [pendingFacilities, setPendingFacilities] = useState<Facility[]>([])
@@ -187,15 +187,17 @@ export default function AdminPage() {
   const [loading, setLoading] = useState(false) // For testing tab operations
   const facilitiesLoadedRef = useRef(false)
 
+  // Redirect to login only after auth loading is complete and no user found
+  useEffect(() => {
+    if (!authLoading && !user) {
+      router.push('/login')
+    }
+  }, [user, authLoading, router])
+
   // Load pending facilities when user is available and on review tab
   useEffect(() => {
-    if (!user || !facilityUser) {
-      router.push('/login')
-      return
-    }
-    
     const loadData = async () => {
-      if (activeTab === 'review' && !facilitiesLoadedRef.current) {
+      if (user && facilityUser && activeTab === 'review' && !facilitiesLoadedRef.current) {
         console.log('Admin: Loading pending facilities for authenticated user')
         setIsLoading(true)
         try {
@@ -207,7 +209,7 @@ export default function AdminPage() {
     }
     
     loadData()
-  }, [user, facilityUser, router, activeTab])
+  }, [user, facilityUser, activeTab])
 
   if (!user || !facilityUser) {
     return (
