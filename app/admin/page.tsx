@@ -183,37 +183,60 @@ export default function AdminPage() {
   const [pendingFacilities, setPendingFacilities] = useState<Facility[]>([])
   const [expandedFacility, setExpandedFacility] = useState<string | null>(null)
   const [facilityReviews, setFacilityReviews] = useState<{[key: string]: FacilityReview}>({})
-  const [isLoading, setIsLoading] = useState(true) // Main loading state for the entire page
+  const [isLoading, setIsLoading] = useState(false) // Loading state for data operations only
   const [loading, setLoading] = useState(false) // For testing tab operations
   const facilitiesLoadedRef = useRef(false)
 
-  // Redirect if not authenticated - only after auth loading is complete
+  // Early return pattern like dashboard - prevents header re-rendering
   useEffect(() => {
     if (!authLoading && !user) {
       router.push('/login')
     }
   }, [user, authLoading, router])
 
-  // Load pending facilities only when user is confirmed and on review tab
-  // Similar to dashboard approach - wait for auth to complete before loading data
+  // Load pending facilities when user is available and on review tab
   useEffect(() => {
     const loadData = async () => {
-      if (user && !authLoading && activeTab === 'review' && !facilitiesLoadedRef.current) {
+      if (user && activeTab === 'review' && !facilitiesLoadedRef.current) {
         console.log('Admin: Loading pending facilities for authenticated user')
+        setIsLoading(true)
         try {
           await loadPendingFacilities()
         } finally {
-          // Always set loading to false when complete
           setIsLoading(false)
         }
-      } else if (!authLoading) {
-        // If auth is complete but no user, stop loading
-        setIsLoading(false)
       }
     }
     
     loadData()
-  }, [user, authLoading, activeTab]) // Removed facilityUser dependency
+  }, [user, activeTab])
+
+  // Early return for auth states - same pattern as dashboard
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        <span className="ml-2 text-gray-600">Loading...</span>
+      </div>
+    )
+  }
+
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">Access Denied</h2>
+          <p className="text-gray-600 mb-4">You need to be logged in to access the admin panel.</p>
+          <button
+            onClick={() => router.push('/login')}
+            className="btn-primary"
+          >
+            Sign In
+          </button>
+        </div>
+      </div>
+    )
+  }
 
   const loadPendingFacilities = async () => {
     console.log('Admin: Starting to load pending facilities')
@@ -753,24 +776,6 @@ export default function AdminPage() {
   }
 
 
-
-  // Show loading while checking authentication or loading data
-  // Don't wait for facilityUser as it might fail to load but admin should still work
-  if (authLoading || isLoading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading admin panel...</p>
-        </div>
-      </div>
-    )
-  }
-
-  // Redirect to login if not authenticated
-  if (!user) {
-    return null
-  }
 
   return (
     <div className="min-h-screen bg-gray-50 py-12">

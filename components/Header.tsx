@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { Menu, X, MapPin, User, LogOut } from 'lucide-react'
 import { useAuth } from '@/lib/auth'
@@ -8,6 +8,19 @@ import { useAuth } from '@/lib/auth'
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const { user, facilityUser, loading, signOut, refreshFacilityUser } = useAuth()
+  
+  // Stable name display - preserve the name even if facilityUser temporarily becomes null
+  const [displayName, setDisplayName] = useState<string>('')
+  
+  // Update display name when facilityUser changes, but preserve it if facilityUser becomes null
+  useEffect(() => {
+    if (facilityUser?.first_name) {
+      setDisplayName(facilityUser.first_name)
+    } else if (!displayName && user?.email) {
+      // Only set email fallback if we don't already have a display name
+      setDisplayName(user.email.split('@')[0])
+    }
+  }, [facilityUser, user, displayName])
 
   return (
     <header className="bg-white shadow-sm border-b">
@@ -42,7 +55,7 @@ export default function Header() {
                   Dashboard
                 </Link>
                 <span className="text-gray-700">
-                  Welcome, {facilityUser?.first_name || user?.email?.split('@')[0] || 'User'}
+                  Welcome, {displayName || 'User'}
                   {/* Removed loading indicator for better UX */}
                   {user && !facilityUser?.first_name && facilityUser && (
                     <button
@@ -122,7 +135,7 @@ export default function Header() {
                       Dashboard
                     </Link>
                     <span className="text-gray-700">
-                      Welcome, {facilityUser?.first_name || user?.email?.split('@')[0] || 'User'}
+                      Welcome, {displayName || 'User'}
                       {/* Removed loading indicator for better UX */}
                       {user && !facilityUser?.first_name && facilityUser && (
                         <button
