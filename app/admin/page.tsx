@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/lib/auth'
@@ -89,9 +89,110 @@ interface FacilityReview {
   previous_review_id?: string
 }
 
+// Move ReviewSection outside to prevent recreation on every render
+const ReviewSection = ({ 
+  title, 
+  content, 
+  facilityId, 
+  fieldPrefix,
+  facilityReviews,
+  updateReviewField,
+  initializeReview
+}: { 
+  title: string
+  content: React.ReactNode
+  facilityId: string
+  fieldPrefix: string
+  facilityReviews: {[key: string]: FacilityReview}
+  updateReviewField: (facilityId: string, field: string, value: string | boolean) => void
+  initializeReview: (facilityId: string) => FacilityReview
+}) => {
+  const review = facilityReviews[facilityId] || initializeReview(facilityId)
+  const statusField = `${fieldPrefix}_status` as keyof FacilityReview
+  const commentsField = `${fieldPrefix}_comments` as keyof FacilityReview
+  const addressedField = `${fieldPrefix}_addressed` as keyof FacilityReview
+  const currentStatus = review[statusField] as string || 'pending'
+  const previousComments = review[commentsField] as string || ''
+  const isAddressed = review[addressedField] as boolean || false
+  
+  return (
+    <div className="border border-gray-200 rounded-lg p-4 mb-4">
+      <div className="flex justify-between items-start mb-3">
+        <h4 className="font-medium text-gray-900">{title}</h4>
+        <div className="flex space-x-2">
+          <button
+            onClick={() => updateReviewField(facilityId, statusField, 'approved')}
+            className={`p-1 rounded ${
+              currentStatus === 'approved' 
+                ? 'bg-green-100 text-green-600' 
+                : 'bg-gray-100 text-gray-400 hover:bg-green-50 hover:text-green-500'
+            }`}
+          >
+            <CheckCircle className="w-5 h-5" />
+          </button>
+          <button
+            onClick={() => updateReviewField(facilityId, statusField, 'needs_changes')}
+            className={`p-1 rounded ${
+              currentStatus === 'needs_changes' 
+                ? 'bg-red-100 text-red-600' 
+                : 'bg-gray-100 text-gray-400 hover:bg-red-50 hover:text-red-500'
+            }`}
+          >
+            <XCircle className="w-5 h-5" />
+          </button>
+        </div>
+      </div>
+      
+      <div className="mb-3">
+        {content}
+      </div>
+      
+      {/* Show previous feedback if it exists */}
+      {previousComments && currentStatus === 'pending' && (
+        <div className="mb-3 p-3 bg-yellow-50 border border-yellow-200 rounded">
+          <div className="flex items-start justify-between">
+            <div className="flex-1">
+              <h5 className="text-sm font-medium text-yellow-800 mb-1">Previous Feedback:</h5>
+              <p className="text-sm text-yellow-700">{previousComments}</p>
+            </div>
+            <label className="flex items-center ml-3 text-sm">
+              <input
+                type="checkbox"
+                checked={isAddressed}
+                onChange={(e) => updateReviewField(facilityId, addressedField, e.target.checked)}
+                className="mr-2 rounded border-gray-300 text-green-600 focus:ring-green-500"
+              />
+              <span className={`${isAddressed ? 'text-green-700 font-medium' : 'text-gray-600'}`}>
+                Addressed
+              </span>
+            </label>
+          </div>
+        </div>
+      )}
+      
+      {/* Only show comments box if status is "needs_changes" */}
+      {currentStatus === 'needs_changes' && (
+        <textarea
+          placeholder={`Feedback for ${title.toLowerCase()}...`}
+          value={review[commentsField] as string || ''}
+          onChange={(e) => updateReviewField(facilityId, commentsField, e.target.value)}
+          className="w-full text-sm border border-gray-300 rounded px-3 py-2 resize-none"
+          rows={3}
+        />
+      )}
+    </div>
+  )
+}
+
 export default function AdminPage() {
   const router = useRouter()
   const { user, loading } = useAuth()
+  const [message, setMessage] = useState('')
+  const [activeTab, setActiveTab] = useState<'review' | 'testing'>('review')
+  const [pendingFacilities, setPendingFacilities] = useState<Facility[]>([])
+  const [reviewLoading, setReviewLoading] = useState(false)
+  const [expandedFacility, setExpandedFacility] = useState<string | null>(null)
+  const [facilityReviews, setFacilityReviews] = useState<{[key: string]: FacilityReview}>({})
 
   useEffect(() => {
     // Only redirect when loading is complete and no user exists
@@ -100,14 +201,7 @@ export default function AdminPage() {
     }
   }, [loading, user, router])
 
-  // Load pending facilities when switching to review tab
-  useEffect(() => {
-    if (activeTab === 'review' && user && !loading && pendingFacilities.length === 0) {
-      loadPendingFacilities()
-    }
-  }, [activeTab, user, loading])
-
-  const loadPendingFacilities = async () => {
+  const loadPendingFacilities = useCallback(async () => {
     setReviewLoading(true)
     try {
       const { data, error } = await supabase
@@ -171,9 +265,16 @@ export default function AdminPage() {
     } finally {
       setReviewLoading(false)
     }
-  }
+  }, [])
 
-  const initializeReview = (facilityId: string): FacilityReview => {
+  // Load pending facilities when switching to review tab
+  useEffect(() => {
+    if (activeTab === 'review' && user && !loading && pendingFacilities.length === 0) {
+      loadPendingFacilities()
+    }
+  }, [activeTab, user, loading, pendingFacilities.length, loadPendingFacilities])
+
+  const initializeReview = useCallback((facilityId: string): FacilityReview => {
     return {
       facility_id: facilityId,
       basic_info_status: 'pending',
@@ -206,9 +307,9 @@ export default function AdminPage() {
       general_comments: '',
       status: 'pending'
     }
-  }
+  }, [])
 
-  const updateReviewField = (facilityId: string, field: string, value: string | boolean) => {
+  const updateReviewField = useCallback((facilityId: string, field: string, value: string | boolean) => {
     setFacilityReviews(prev => ({
       ...prev,
       [facilityId]: {
@@ -216,9 +317,9 @@ export default function AdminPage() {
         [field]: value
       }
     }))
-  }
+  }, [initializeReview])
 
-  const hasAnyFeedback = (facilityId: string): boolean => {
+  const hasAnyFeedback = useCallback((facilityId: string): boolean => {
     const review = facilityReviews[facilityId]
     if (!review) return false
     
@@ -234,9 +335,9 @@ export default function AdminPage() {
       review.availability_comments ||
       review.general_comments
     )
-  }
+  }, [facilityReviews])
 
-  const areAllSectionsApproved = (facilityId: string): boolean => {
+  const areAllSectionsApproved = useCallback((facilityId: string): boolean => {
     const review = facilityReviews[facilityId]
     if (!review) return false
     
@@ -251,9 +352,9 @@ export default function AdminPage() {
       review.policies_status === 'approved' &&
       (review.availability_status ? review.availability_status === 'approved' : true)
     )
-  }
+  }, [facilityReviews])
 
-  const approveFacility = async (facilityId: string) => {
+  const approveFacility = useCallback(async (facilityId: string) => {
     try {
       // Update facility status to approved
       const { error: facilityError } = await supabase
@@ -300,9 +401,9 @@ export default function AdminPage() {
     } catch (err: any) {
       setMessage(`❌ Error approving facility: ${err.message}`)
     }
-  }
+  }, [facilityReviews, loadPendingFacilities])
 
-  const rejectFacility = async (facilityId: string) => {
+  const rejectFacility = useCallback(async (facilityId: string) => {
     if (!hasAnyFeedback(facilityId)) {
       setMessage('❌ Please provide feedback before rejecting a facility.')
       return
@@ -346,7 +447,7 @@ export default function AdminPage() {
     } catch (err: any) {
       setMessage(`❌ Error rejecting facility: ${err.message}`)
     }
-  }
+  }, [facilityReviews, hasAnyFeedback, initializeReview, loadPendingFacilities])
 
   // Show loading while auth is determining state
   if (loading) {
