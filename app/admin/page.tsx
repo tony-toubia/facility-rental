@@ -189,7 +189,7 @@ export default function AdminPage() {
 
   // Load pending facilities when user is available and on review tab
   useEffect(() => {
-    if (!user || !facilityUser) {
+    if (!user) {
       router.push('/login')
       return
     }
@@ -208,9 +208,9 @@ export default function AdminPage() {
     }
     
     loadData()
-  }, [user, facilityUser, router, activeTab])
+  }, [user, router, activeTab])
 
-  if (!user || !facilityUser) {
+  if (!user) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
