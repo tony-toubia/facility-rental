@@ -134,14 +134,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signOut = async () => {
     console.log('SignOut called')
     try {
+      console.log('Calling supabase.auth.signOut()...')
       const { error } = await supabase.auth.signOut()
+      console.log('Supabase signOut response:', { error })
+
       if (error) {
         console.error('SignOut error:', error)
+        console.error('Error details:', {
+          message: error.message,
+          status: error.status,
+          name: error.name
+        })
       } else {
         console.log('SignOut successful')
+        // Force a page reload to ensure auth state is cleared
+        window.location.reload()
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('SignOut exception:', error)
+      console.error('Exception details:', {
+        message: error?.message,
+        stack: error?.stack,
+        name: error?.name
+      })
     }
   }
 

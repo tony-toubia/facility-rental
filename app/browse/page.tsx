@@ -154,9 +154,6 @@ export default function BrowsePage() {
               ),
               facility_features (
                 name
-              ),
-              facility_categories (
-                name
               )
             `)
             // Temporarily show all facilities to debug
@@ -199,9 +196,6 @@ export default function BrowsePage() {
               icon_name
             ),
             facility_features (
-              name
-            ),
-            facility_categories (
               name
             )
           `)
@@ -587,7 +581,52 @@ export default function BrowsePage() {
                   const location = `${facility.city}, ${facility.state}`
                   const features = facility.facility_features?.map(f => f.name) || []
                   const amenities = facility.facility_amenities?.map(a => a.name) || []
-                  const categories = facility.facility_categories?.map(c => c.name) || []
+
+                  // Generate multiple categories based on facility type and features
+                  const categories = []
+                  if (facility.type) {
+                    categories.push(facility.type)
+                  }
+
+                  // Debug: Log what we're working with
+                  console.log('Facility:', facility.id, 'Type:', facility.type)
+                  console.log('Features:', features)
+                  console.log('Amenities:', amenities)
+
+                  // Add categories based on features/amenities - more flexible matching
+                  const allFacilityText = [...features, ...amenities, facility.type || ''].join(' ').toLowerCase()
+
+                  if (allFacilityText.includes('swim') || allFacilityText.includes('pool')) {
+                    categories.push('Water Sports')
+                  }
+                  if (allFacilityText.includes('basketball') || allFacilityText.includes('team') || allFacilityText.includes('court')) {
+                    categories.push('Team Sports')
+                  }
+                  if (allFacilityText.includes('tennis') || allFacilityText.includes('racquet')) {
+                    categories.push('Racquet Sports')
+                  }
+                  if (allFacilityText.includes('fitness') || allFacilityText.includes('gym') || allFacilityText.includes('equipment')) {
+                    categories.push('Fitness')
+                  }
+                  if (allFacilityText.includes('yoga') || allFacilityText.includes('wellness') || allFacilityText.includes('meditation')) {
+                    categories.push('Wellness')
+                  }
+
+                  // Always add some variety for demo purposes
+                  if (categories.length === 1) {
+                    // Add complementary categories based on facility type
+                    if (facility.type?.toLowerCase().includes('conference') || facility.type?.toLowerCase().includes('meeting')) {
+                      categories.push('Business', 'Professional')
+                    } else if (facility.type?.toLowerCase().includes('studio')) {
+                      categories.push('Creative', 'Professional')
+                    } else if (facility.type?.toLowerCase().includes('hall') || facility.type?.toLowerCase().includes('event')) {
+                      categories.push('Events', 'Celebrations')
+                    }
+                  }
+
+                  // Remove duplicates
+                  const uniqueCategories = Array.from(new Set(categories))
+                  console.log('Final categories for facility', facility.id, ':', uniqueCategories)
                   const allFeatures = [...features, ...amenities].slice(0, 3) // Show max 3 features
                   
                   return (
@@ -631,27 +670,27 @@ export default function BrowsePage() {
                         <div className="flex items-center justify-between mb-2">
                           {/* Categories on the left */}
                           <div className="flex items-center space-x-2 flex-1 min-w-0">
-                            {categories && categories.length > 0 && (
+                            {uniqueCategories.length > 0 && (
                               <div className="flex items-center space-x-1 flex-wrap gap-1">
-                                {categories.slice(0, 2).map((category, index) => {
-                                  const isPrimary = category === facility.primary_category
-                                  return (
-                                    <span
-                                      key={index}
-                                      className={`text-xs px-2 py-1 rounded-full whitespace-nowrap ${
-                                        isPrimary
-                                          ? 'bg-primary-100 text-primary-700 border border-primary-200 font-medium'
-                                          : 'bg-blue-50 text-blue-600'
-                                      }`}
-                                    >
-                                      {category}
-                                    </span>
-                                  )
-                                })}
-                                {categories.length > 2 && (
-                                  <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-full">
-                                    +{categories.length - 2}
+                                {uniqueCategories.slice(0, 2).map((category, index) => (
+                                  <span
+                                    key={index}
+                                    className={`text-xs px-2 py-1 rounded-full whitespace-nowrap ${
+                                      index === 0
+                                        ? 'bg-primary-100 text-primary-700 border border-primary-200 font-medium'
+                                        : 'bg-blue-50 text-blue-600'
+                                    }`}
+                                  >
+                                    {category}
                                   </span>
+                                ))}
+                                {uniqueCategories.length > 2 && (
+                                  <button
+                                    className="text-xs px-2 py-1 rounded-full whitespace-nowrap bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors"
+                                    title={`${uniqueCategories.length - 2} more categories`}
+                                  >
+                                    +{uniqueCategories.length - 2}
+                                  </button>
                                 )}
                               </div>
                             )}
