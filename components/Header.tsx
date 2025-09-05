@@ -42,7 +42,10 @@ export default function Header() {
                   Dashboard
                 </Link>
                 <span className="text-gray-700">
-                  Welcome, {facilityUser?.first_name || (facilityUser ? user.email : 'Loading...')}
+                  Welcome, {facilityUser?.first_name || user?.email?.split('@')[0] || 'User'}
+                  {user && !facilityUser && (
+                    <span className="ml-1 text-xs text-gray-500">(loading profile...)</span>
+                  )}
                   {user && !facilityUser?.first_name && facilityUser && (
                     <button
                       onClick={refreshFacilityUser}
@@ -121,7 +124,10 @@ export default function Header() {
                       Dashboard
                     </Link>
                     <span className="text-gray-700">
-                      Welcome, {facilityUser?.first_name || (facilityUser ? user.email : 'Loading...')}
+                      Welcome, {facilityUser?.first_name || user?.email?.split('@')[0] || 'User'}
+                      {user && !facilityUser && (
+                        <span className="ml-1 text-xs text-gray-500">(loading profile...)</span>
+                      )}
                       {user && !facilityUser?.first_name && facilityUser && (
                         <button
                           onClick={refreshFacilityUser}

@@ -109,10 +109,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           }
         } else {
           console.log('Other auth event:', event)
-          setUser(session?.user ?? null)
-          if (!session?.user) {
-            setFacilityUser(null)
-            setLoading(false)
+          // For INITIAL_SESSION, only set user if we don't already have one
+          if (event === 'INITIAL_SESSION') {
+            if (!user && session?.user) {
+              setUser(session.user)
+              await loadFacilityUser(session.user.id)
+            } else if (!session?.user) {
+              setUser(null)
+              setFacilityUser(null)
+              setLoading(false)
+            }
+          } else {
+            setUser(session?.user ?? null)
+            if (!session?.user) {
+              setFacilityUser(null)
+              setLoading(false)
+            }
           }
         }
       }
@@ -122,12 +134,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [])
 
   const loadFacilityUser = async (authUserId: string) => {
+    // Prevent duplicate loading for the same user
+    if (facilityUser && facilityUser.auth_user_id === authUserId) {
+      console.log('Auth: Facility user already loaded for this auth ID, skipping...')
+      return
+    }
+
     try {
       console.log('Auth: Loading facility user for auth ID:', authUserId)
       
-      // Add timeout to prevent hanging
+      // Reduce timeout to 5 seconds to fail faster
       const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Facility user loading timeout')), 10000)
+        setTimeout(() => reject(new Error('Facility user loading timeout')), 5000)
       )
       
       const loadPromise = getFacilityUserByAuthId(authUserId)

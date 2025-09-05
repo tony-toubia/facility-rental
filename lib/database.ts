@@ -274,22 +274,39 @@ export async function getFacilityUserByAuthId(authId: string): Promise<FacilityU
   console.log('getFacilityUserByAuthId called with:', authId)
   
   try {
-    const { data, error } = await supabase
-      .from('facility_users')
-      .select('*')
-      .eq('auth_user_id', authId)
-      .maybeSingle()
+    // Add retry logic for network issues
+    let retries = 2
+    let lastError = null
+    
+    while (retries > 0) {
+      try {
+        const { data, error } = await supabase
+          .from('facility_users')
+          .select('*')
+          .eq('auth_user_id', authId)
+          .maybeSingle()
 
-    console.log('getFacilityUserByAuthId result - data:', data, 'error:', error)
+        console.log('getFacilityUserByAuthId result - data:', data, 'error:', error)
 
-    if (error) {
-      console.error('Error fetching facility user by auth ID:', error)
-      return null
+        if (error) {
+          console.error('Error fetching facility user by auth ID:', error)
+          return null
+        }
+
+        return data
+      } catch (attemptError) {
+        lastError = attemptError
+        retries--
+        if (retries > 0) {
+          console.log(`getFacilityUserByAuthId retry attempt, ${retries} left`)
+          await new Promise(resolve => setTimeout(resolve, 1000)) // Wait 1 second before retry
+        }
+      }
     }
-
-    return data
+    
+    throw lastError
   } catch (networkError) {
-    console.error('Network error in getFacilityUserByAuthId:', networkError)
+    console.error('Network error in getFacilityUserByAuthId after retries:', networkError)
     return null
   }
 }
