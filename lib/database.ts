@@ -272,20 +272,26 @@ export async function getFacilityUser(id: string): Promise<FacilityUser | null> 
 
 export async function getFacilityUserByAuthId(authId: string): Promise<FacilityUser | null> {
   console.log('getFacilityUserByAuthId called with:', authId)
-  const { data, error } = await supabase
-    .from('facility_users')
-    .select('*')
-    .eq('auth_user_id', authId)
-    .maybeSingle()
+  
+  try {
+    const { data, error } = await supabase
+      .from('facility_users')
+      .select('*')
+      .eq('auth_user_id', authId)
+      .maybeSingle()
 
-  console.log('getFacilityUserByAuthId result - data:', data, 'error:', error)
+    console.log('getFacilityUserByAuthId result - data:', data, 'error:', error)
 
-  if (error) {
-    console.error('Error fetching facility user by auth ID:', error)
+    if (error) {
+      console.error('Error fetching facility user by auth ID:', error)
+      return null
+    }
+
+    return data
+  } catch (networkError) {
+    console.error('Network error in getFacilityUserByAuthId:', networkError)
     return null
   }
-
-  return data
 }
 
 export async function createFacilityUser(user: {

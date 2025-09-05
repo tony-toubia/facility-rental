@@ -121,7 +121,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const loadFacilityUser = async (authUserId: string) => {
     try {
       console.log('Auth: Loading facility user for auth ID:', authUserId)
-      let facilityUser = await getFacilityUserByAuthId(authUserId)
+      
+      // Add timeout to prevent hanging
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Facility user loading timeout')), 10000)
+      )
+      
+      const loadPromise = getFacilityUserByAuthId(authUserId)
+      let facilityUser = await Promise.race([loadPromise, timeoutPromise]) as FacilityUser | null
+      
       console.log('Auth: Facility user lookup result:', facilityUser)
 
       // If no facility user exists, create one from auth user data
@@ -157,6 +165,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setFacilityUser(facilityUser)
     } catch (error) {
       console.error('Auth: Error in loadFacilityUser:', error)
+      // Don't let facility user loading failure block the app
       setFacilityUser(null)
     } finally {
       setLoading(false)

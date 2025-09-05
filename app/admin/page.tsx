@@ -193,13 +193,14 @@ export default function AdminPage() {
     }
   }, [user, authLoading, router])
 
-  // Load pending facilities only when user and facility user are confirmed and on review tab
+  // Load pending facilities only when user is confirmed and on review tab
+  // Don't require facilityUser to be loaded for admin functionality
   useEffect(() => {
-    if (user && facilityUser && !authLoading && activeTab === 'review' && pendingFacilities.length === 0) {
+    if (user && !authLoading && activeTab === 'review' && pendingFacilities.length === 0) {
       console.log('Admin: Loading pending facilities for authenticated user')
       loadPendingFacilities()
     }
-  }, [user, facilityUser, authLoading, activeTab]) // Include all dependencies
+  }, [user, authLoading, activeTab]) // Removed facilityUser dependency
 
   const loadPendingFacilities = async () => {
     console.log('Admin: Starting to load pending facilities')
@@ -742,8 +743,9 @@ export default function AdminPage() {
 
 
 
-  // Show loading while checking authentication or loading facility user data
-  if (authLoading || (user && !facilityUser)) {
+  // Show loading while checking authentication
+  // Don't wait for facilityUser as it might fail to load but admin should still work
+  if (authLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
