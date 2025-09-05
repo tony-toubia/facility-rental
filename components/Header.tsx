@@ -7,7 +7,10 @@ import { useAuth } from '@/lib/auth'
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
-  const { user, signOut } = useAuth()
+  const { user, signOut, loading } = useAuth()
+  
+  // Prevent showing auth UI changes during loading states
+  // Once we have user data, maintain it even during brief loading states
 
   return (
     <header className="bg-white shadow-sm border-b">

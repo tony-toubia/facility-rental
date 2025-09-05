@@ -32,6 +32,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true)
   const hasCheckedInitialSession = useRef(false)
   const currentUserRef = useRef<User | null>(null)
+  const isInitialized = useRef(false)
 
   useEffect(() => {
     // Check if we just signed out (from URL parameter)
@@ -77,19 +78,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           console.log('Valid session found, loading user data...')
           setUser(session.user)
           currentUserRef.current = session.user
-          await loadFacilityUser(session.user.id)
+          await loadFacilityUser(session.user.id, true)
         } else {
           console.log('No valid session found')
           setUser(null)
           currentUserRef.current = null
           setFacilityUser(null)
-          setLoading(false)
+          if (!isInitialized.current) {
+            setLoading(false)
+            isInitialized.current = true
+          }
         }
       } catch (error) {
         console.error('Error checking initial session:', error)
         setUser(null)
         setFacilityUser(null)
-        setLoading(false)
+        if (!isInitialized.current) {
+          setLoading(false)
+          isInitialized.current = true
+        }
       }
     }
 
@@ -105,13 +112,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setFacilityUser(null)
           setUser(null)
           currentUserRef.current = null
-          setLoading(false)
+          // Don't reset loading on signout unless it's the initial check
+          if (!isInitialized.current) {
+            setLoading(false)
+            isInitialized.current = true
+          }
         } else if (event === 'SIGNED_IN' && session?.user) {
-          console.log('User signed in, checking if facility user reload needed...')
+          console.log('User signed in, loading facility user...')
           setUser(session.user)
           currentUserRef.current = session.user
-          // Always load facility user to ensure fresh state
-          loadFacilityUser(session.user.id)
+          // Load facility user but don't reset loading state after initialization
+          if (isInitialized.current) {
+            // Already initialized, just update facility user silently
+            loadFacilityUser(session.user.id, false).catch(console.error)
+          } else {
+            // First initialization
+            await loadFacilityUser(session.user.id, true)
+          }
         } else if (event === 'TOKEN_REFRESHED') {
           console.log('Token refreshed')
           // Only update user if it's actually different to prevent unnecessary re-renders
@@ -126,19 +143,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             if (session?.user) {
               setUser(session.user)
               currentUserRef.current = session.user
-              loadFacilityUser(session.user.id)
+              if (isInitialized.current) {
+                // Already initialized, just update facility user silently
+                loadFacilityUser(session.user.id, false).catch(console.error)
+              } else {
+                // First initialization
+                await loadFacilityUser(session.user.id, true)
+              }
             } else {
               setUser(null)
               currentUserRef.current = null
               setFacilityUser(null)
-              setLoading(false)
+              if (!isInitialized.current) {
+                setLoading(false)
+                isInitialized.current = true
+              }
             }
           } else {
             setUser(session?.user ?? null)
             currentUserRef.current = session?.user ?? null
             if (!session?.user) {
               setFacilityUser(null)
-              setLoading(false)
+              // Don't reset loading state after initialization
+              if (!isInitialized.current) {
+                setLoading(false)
+                isInitialized.current = true
+              }
             }
           }
         }
@@ -148,9 +178,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => subscription.unsubscribe()
   }, [])
 
-  const loadFacilityUser = async (authUserId: string) => {
+  const loadFacilityUser = async (authUserId: string, isInitialLoad = false) => {
     try {
-      console.log('Auth: Loading facility user for auth ID:', authUserId)
+      console.log('Auth: Loading facility user for auth ID:', authUserId, isInitialLoad ? '(initial)' : '(update)')
       
       const result = await getFacilityUserByAuthId(authUserId)
       console.log('Auth: Facility user lookup result:', result)
@@ -160,7 +190,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.error('Auth: Error loading facility user:', error)
       setFacilityUser(null)
     } finally {
-      setLoading(false)
+      // Only set loading to false on the very first initialization
+      if (isInitialLoad && !isInitialized.current) {
+        setLoading(false)
+        isInitialized.current = true
+      }
     }
   }
 
@@ -252,45 +286,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const refreshFacilityUser = async () => {
     if (user?.id) {
-      await loadFacilityUser(user.id)
-    }
-  }
-
-  // Pre-fetch admin data to avoid re-auth on admin page
-  const prefetchAdminData = async () => {
-    console.log('Pre-fetching admin data...')
-    
-    // Only prefetch if we already have valid user data
-    if (!user || !facilityUser) {
-      console.log('No user data available for pre-fetch')
-      return
-    }
-    
-    // Pre-fetch pending facilities for admin page (without refreshing auth)
-    try {
-      console.log('Pre-fetching pending facilities...')
-      
-      // Fetch some minimal data to warm up the connection
-      await supabase
-        .from('facility_facilities')
-        .select(`
-          id,
-          status,
-          name
-        `)
-        .in('status', ['pending_approval', 'needs_changes'])
-        .limit(5) // Fetch a few records to better warm up the connection
-      
-      // Also pre-fetch a small amount of review data
-      await supabase
-        .from('facility_reviews')
-        .select('id, facility_id, status')
-        .limit(5)
-      
-      console.log('Admin data pre-fetched successfully')
-    } catch (err) {
-      console.error('Error pre-fetching admin data:', err)
-      // Don't throw - this is just optimization
+      await loadFacilityUser(user.id, false)
     }
   }
 
