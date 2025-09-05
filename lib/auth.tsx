@@ -36,26 +36,51 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const justSignedOut = urlParams.get('signed_out') === 'true'
 
     if (justSignedOut) {
-      console.log('Detected signout from URL parameter, clearing state...')
+      console.log('Detected signout from URL parameter, ensuring clean state...')
+      // Force clear all auth-related storage
+      localStorage.removeItem('supabase.auth.token')
+      sessionStorage.clear()
+
       setUser(null)
       setFacilityUser(null)
       setLoading(false)
+
       // Clean up the URL
       const newUrl = window.location.pathname
       window.history.replaceState({}, document.title, newUrl)
       return
     }
 
-    // Get initial session
+    // Get initial session with more robust checking
     const checkInitialSession = async () => {
       console.log('Checking initial session...')
-      const { data: { session }, error } = await supabase.auth.getSession()
-      console.log('Initial session result:', session?.user?.id || 'no session', error)
 
-      setUser(session?.user ?? null)
-      if (session?.user) {
-        await loadFacilityUser(session.user.id)
-      } else {
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession()
+        console.log('Initial session result:', session?.user?.id || 'no session', error?.message || 'no error')
+
+        if (error) {
+          console.error('Session check error:', error)
+          setUser(null)
+          setFacilityUser(null)
+          setLoading(false)
+          return
+        }
+
+        if (session?.user) {
+          console.log('Valid session found, loading user data...')
+          setUser(session.user)
+          await loadFacilityUser(session.user.id)
+        } else {
+          console.log('No valid session found')
+          setUser(null)
+          setFacilityUser(null)
+          setLoading(false)
+        }
+      } catch (error) {
+        console.error('Error checking initial session:', error)
+        setUser(null)
+        setFacilityUser(null)
         setLoading(false)
       }
     }
@@ -166,33 +191,52 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   const signOut = async () => {
-    console.log('SignOut called - starting immediate signout process')
-
-    // Immediately clear local state first
-    console.log('Clearing local auth state...')
-    setUser(null)
-    setFacilityUser(null)
-    setLoading(false)
+    console.log('SignOut called - starting proper signout process')
 
     try {
-      console.log('Attempting Supabase signout...')
+      console.log('Calling Supabase signOut...')
 
-      // Try signout with a short timeout
+      // Create a promise that resolves when signout completes
       const signOutPromise = supabase.auth.signOut()
+
+      // Create a timeout promise
       const timeoutPromise = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error('SignOut timeout')), 3000)
+        setTimeout(() => reject(new Error('SignOut timeout')), 5000)
       )
 
-      const result = await Promise.race([signOutPromise, timeoutPromise])
-      console.log('Supabase signOut result:', result)
+      // Wait for either signout to complete or timeout
+      await Promise.race([signOutPromise, timeoutPromise])
+      console.log('Supabase signOut completed successfully')
+
+      // Wait a moment for auth state to propagate
+      await new Promise(resolve => setTimeout(resolve, 500))
+
+      // Check if session is actually cleared
+      const { data: { session } } = await supabase.auth.getSession()
+      if (session) {
+        console.log('Session still exists after signout, forcing local clear...')
+        // Force clear local storage
+        localStorage.removeItem('supabase.auth.token')
+        sessionStorage.clear()
+      }
+
+      console.log('Signout process complete, reloading page...')
+      window.location.href = window.location.pathname + '?signed_out=true&t=' + Date.now()
 
     } catch (error: any) {
-      console.log('Signout attempt failed, but continuing with local cleanup:', error?.message)
-    }
+      console.error('SignOut failed:', error?.message)
 
-    // Always reload the page immediately after attempting signout
-    console.log('Signout process complete, reloading page...')
-    window.location.href = window.location.pathname + '?signed_out=true&t=' + Date.now()
+      // Even if signout fails, force clear everything
+      console.log('Forcing local cleanup due to signout failure...')
+      localStorage.removeItem('supabase.auth.token')
+      sessionStorage.clear()
+      setUser(null)
+      setFacilityUser(null)
+      setLoading(false)
+
+      // Still reload the page
+      window.location.href = window.location.pathname + '?signed_out=true&t=' + Date.now()
+    }
   }
 
   const refreshFacilityUser = async () => {
