@@ -103,7 +103,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           await loadFacilityUser(session.user.id)
         } else if (event === 'TOKEN_REFRESHED') {
           console.log('Token refreshed')
-          setUser(session?.user ?? null)
+          // Only update user if it's actually different to prevent unnecessary re-renders
+          if (session?.user && session.user.id !== user?.id) {
+            setUser(session.user)
+          }
         } else {
           console.log('Other auth event:', event)
           setUser(session?.user ?? null)

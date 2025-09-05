@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/lib/auth'
@@ -185,6 +185,7 @@ export default function AdminPage() {
   const [reviewLoading, setReviewLoading] = useState(false)
   const [expandedFacility, setExpandedFacility] = useState<string | null>(null)
   const [facilityReviews, setFacilityReviews] = useState<{[key: string]: FacilityReview}>({})
+  const facilitiesLoadedRef = useRef(false)
 
   // Redirect if not authenticated - only after auth loading is complete
   useEffect(() => {
@@ -196,7 +197,7 @@ export default function AdminPage() {
   // Load pending facilities only when user is confirmed and on review tab
   // Don't require facilityUser to be loaded for admin functionality
   useEffect(() => {
-    if (user && !authLoading && activeTab === 'review' && pendingFacilities.length === 0) {
+    if (user && !authLoading && activeTab === 'review' && !facilitiesLoadedRef.current) {
       console.log('Admin: Loading pending facilities for authenticated user')
       loadPendingFacilities()
     }
@@ -205,6 +206,7 @@ export default function AdminPage() {
   const loadPendingFacilities = async () => {
     console.log('Admin: Starting to load pending facilities')
     setReviewLoading(true)
+    facilitiesLoadedRef.current = true
     try {
       console.log('Admin: Executing database query for pending facilities')
       const { data, error } = await supabase
@@ -773,7 +775,13 @@ export default function AdminPage() {
           <div className="border-b border-gray-200 mb-8">
             <nav className="-mb-px flex space-x-8">
               <button
-                onClick={() => setActiveTab('review')}
+                onClick={() => {
+                  setActiveTab('review')
+                  // Reset the loaded flag when switching to review tab to allow refresh if needed
+                  if (activeTab !== 'review') {
+                    facilitiesLoadedRef.current = false
+                  }
+                }}
                 className={`py-2 px-1 border-b-2 font-medium text-sm ${
                   activeTab === 'review'
                     ? 'border-primary-500 text-primary-600'
