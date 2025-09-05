@@ -110,7 +110,7 @@ const ReviewSection = ({
   facilityId: string
   fieldPrefix: string
   facilityReviews: {[key: string]: FacilityReview}
-  updateReviewField: (facilityId: string, field: string, value: string) => void
+  updateReviewField: (facilityId: string, field: string, value: string | boolean) => void
   initializeReview: (facilityId: string) => FacilityReview
 }) => {
   const review = facilityReviews[facilityId] || initializeReview(facilityId)
