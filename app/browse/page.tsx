@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
-import { Search, Filter, MapPin, Star, DollarSign, Grid, List, Navigation, Plus, Clock, Calendar } from 'lucide-react'
+import { Search, Filter, MapPin, Star, DollarSign, Grid, List, Navigation, Clock, Calendar } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/lib/auth'
 import { getFacilitiesWithinRadius, getBrowserLocation, geocodeAddress, LocationData } from '@/lib/geolocation-new'
@@ -79,19 +79,7 @@ export default function BrowsePage() {
   const [userLocation, setUserLocation] = useState<LocationData | null>(null)
   const [locationLoading, setLocationLoading] = useState(false)
   const [radiusMiles, setRadiusMiles] = useState(25)
-  const [expandedCategories, setExpandedCategories] = useState<string | null>(null)
 
-  // Close expanded categories when clicking outside
-  useEffect(() => {
-    const handleClickOutside = () => {
-      setExpandedCategories(null)
-    }
-
-    if (expandedCategories) {
-      document.addEventListener('click', handleClickOutside)
-      return () => document.removeEventListener('click', handleClickOutside)
-    }
-  }, [expandedCategories])
 
   const handleLocationSelect = useCallback((location: LocationData) => {
     console.log('Location selected:', location)
@@ -243,17 +231,6 @@ export default function BrowsePage() {
     }
   }, [userLocation, loadUserLocationFromBrowser])
 
-  // Close popover when clicking outside
-  useEffect(() => {
-    const handleClickOutside = () => {
-      setExpandedCategories(null)
-    }
-    
-    if (expandedCategories) {
-      document.addEventListener('click', handleClickOutside)
-      return () => document.removeEventListener('click', handleClickOutside)
-    }
-  }, [expandedCategories])
 
   // Handle URL parameters from home page search
   useEffect(() => {
@@ -641,8 +618,37 @@ export default function BrowsePage() {
                       </div>
 
                       <div className="p-4 flex-1">
-                        <div className="flex items-center justify-end mb-2">
-                          <div className="flex items-center space-x-1">
+                        <div className="flex items-center justify-between mb-2">
+                          {/* Categories on the left */}
+                          <div className="flex items-center space-x-2 flex-1 min-w-0">
+                            {facility.categories && facility.categories.length > 0 && (
+                              <div className="flex items-center space-x-1 flex-wrap gap-1">
+                                {facility.categories.slice(0, 2).map((category, index) => {
+                                  const isPrimary = category === facility.primary_category
+                                  return (
+                                    <span
+                                      key={index}
+                                      className={`text-xs px-2 py-1 rounded-full whitespace-nowrap ${
+                                        isPrimary
+                                          ? 'bg-primary-100 text-primary-700 border border-primary-200 font-medium'
+                                          : 'bg-blue-50 text-blue-600'
+                                      }`}
+                                    >
+                                      {category}
+                                    </span>
+                                  )
+                                })}
+                                {facility.categories.length > 2 && (
+                                  <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-full">
+                                    +{facility.categories.length - 2}
+                                  </span>
+                                )}
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Star rating on the right */}
+                          <div className="flex items-center space-x-1 flex-shrink-0">
                             {facility.rating ? (
                               <>
                                 <Star className="w-4 h-4 text-yellow-400 fill-current" />
@@ -673,72 +679,6 @@ export default function BrowsePage() {
                           )}
                         </div>
 
-                        {/* Categories Display */}
-                        {facility.categories && facility.categories.length > 0 && (
-                          <div className="flex flex-wrap gap-1 mb-3 relative">
-                            {facility.categories.slice(0, 3).map((category, index) => {
-                              const isPrimary = category === facility.primary_category
-                              return (
-                                <span
-                                  key={index}
-                                  className={`text-xs px-2 py-1 rounded-full whitespace-nowrap ${
-                                    isPrimary 
-                                      ? 'bg-primary-100 text-primary-700 border border-primary-200 font-medium' 
-                                      : 'bg-blue-50 text-blue-600'
-                                  }`}
-                                >
-                                  {category}
-                                </span>
-                              )
-                            })}
-                            {facility.categories.length > 3 && (
-                              <div className="relative">
-                                <button
-                                  onClick={(e) => {
-                                    e.preventDefault()
-                                    e.stopPropagation()
-                                    setExpandedCategories(expandedCategories === facility.id ? null : facility.id)
-                                  }}
-                                  className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-full hover:bg-gray-200 transition-colors flex items-center space-x-1"
-                                >
-                                  <Plus className="w-3 h-3" />
-                                  <span>{facility.categories.length - 3}</span>
-                                </button>
-                                {expandedCategories === facility.id && (
-                                  <div className="absolute top-full left-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg p-3 z-20 min-w-48 max-w-64">
-                                    <div className="flex flex-wrap gap-1">
-                                      {facility.categories.slice(3).map((category, index) => {
-                                        const isPrimary = category === facility.primary_category
-                                        return (
-                                          <span
-                                            key={index}
-                                            className={`text-xs px-2 py-1 rounded-full whitespace-nowrap ${
-                                              isPrimary 
-                                                ? 'bg-primary-100 text-primary-700 border border-primary-200 font-medium' 
-                                                : 'bg-blue-50 text-blue-600'
-                                            }`}
-                                          >
-                                            {category}
-                                          </span>
-                                        )
-                                      })}
-                                    </div>
-                                    <button
-                                      onClick={(e) => {
-                                        e.preventDefault()
-                                        e.stopPropagation()
-                                        setExpandedCategories(null)
-                                      }}
-                                      className="text-xs text-gray-500 hover:text-gray-700 mt-2 block"
-                                    >
-                                      Close
-                                    </button>
-                                  </div>
-                                )}
-                              </div>
-                            )}
-                          </div>
-                        )}
 
                         {allFeatures.length > 0 && (
                           <div className="flex flex-wrap gap-1 mb-3">
