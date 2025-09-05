@@ -42,9 +42,9 @@ export default function Header() {
                   Dashboard
                 </Link>
                 <span className="text-gray-700">
-                  Welcome, {facilityUser?.first_name || user.email}
-                  {user && !facilityUser?.first_name && (
-                    <button 
+                  Welcome, {facilityUser?.first_name || (facilityUser ? user.email : 'Loading...')}
+                  {user && !facilityUser?.first_name && facilityUser && (
+                    <button
                       onClick={refreshFacilityUser}
                       className="ml-2 text-xs text-primary-600 hover:text-primary-700"
                       title="Refresh user data"
@@ -121,9 +121,9 @@ export default function Header() {
                       Dashboard
                     </Link>
                     <span className="text-gray-700">
-                      Welcome, {facilityUser?.first_name || user.email}
-                      {user && !facilityUser?.first_name && (
-                        <button 
+                      Welcome, {facilityUser?.first_name || (facilityUser ? user.email : 'Loading...')}
+                      {user && !facilityUser?.first_name && facilityUser && (
+                        <button
                           onClick={refreshFacilityUser}
                           className="ml-2 text-xs text-primary-600 hover:text-primary-700"
                           title="Refresh user data"

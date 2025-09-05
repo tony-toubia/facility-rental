@@ -177,7 +177,7 @@ const ReviewSection = ({
 
 export default function AdminPage() {
   const router = useRouter()
-  const { user, loading: authLoading } = useAuth()
+  const { user, facilityUser, loading: authLoading } = useAuth()
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
   const [activeTab, setActiveTab] = useState<'review' | 'testing'>('review')
@@ -189,20 +189,17 @@ export default function AdminPage() {
   // Redirect if not authenticated - only after auth loading is complete
   useEffect(() => {
     if (!authLoading && !user) {
-      console.log('Admin: No user found, redirecting to login')
       router.push('/login')
-    } else if (!authLoading && user) {
-      console.log('Admin: User authenticated, proceeding with admin page')
     }
   }, [user, authLoading, router])
 
-  // Load pending facilities only when user is confirmed and on review tab
+  // Load pending facilities only when user and facility user are confirmed and on review tab
   useEffect(() => {
-    if (user && !authLoading && activeTab === 'review' && pendingFacilities.length === 0) {
+    if (user && facilityUser && !authLoading && activeTab === 'review' && pendingFacilities.length === 0) {
       console.log('Admin: Loading pending facilities for authenticated user')
       loadPendingFacilities()
     }
-  }, [user, authLoading, activeTab]) // Include all dependencies
+  }, [user, facilityUser, authLoading, activeTab]) // Include all dependencies
 
   const loadPendingFacilities = async () => {
     console.log('Admin: Starting to load pending facilities')
@@ -652,8 +649,8 @@ export default function AdminPage() {
 
 
 
-  // Show loading while checking authentication
-  if (authLoading) {
+  // Show loading while checking authentication or loading facility user data
+  if (authLoading || (user && !facilityUser)) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
