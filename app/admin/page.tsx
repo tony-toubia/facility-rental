@@ -177,7 +177,7 @@ const ReviewSection = ({
 
 export default function AdminPage() {
   const router = useRouter()
-  const { user, facilityUser, loading: authLoading } = useAuth()
+  const { user, facilityUser } = useAuth()
   const [message, setMessage] = useState('')
   const [activeTab, setActiveTab] = useState<'review' | 'testing'>('review')
   const [pendingFacilities, setPendingFacilities] = useState<Facility[]>([])
@@ -187,14 +187,13 @@ export default function AdminPage() {
   const [loading, setLoading] = useState(false) // For testing tab operations
   const facilitiesLoadedRef = useRef(false)
 
-  // Load pending facilities when user is available and on review tab
   useEffect(() => {
-    if (!user) {
+    if (!user || !facilityUser) {
       router.push('/login')
       return
     }
     
-    const loadData = async () => {
+    const loadAdminData = async () => {
       if (activeTab === 'review' && !facilitiesLoadedRef.current) {
         console.log('Admin: Loading pending facilities for authenticated user')
         try {
@@ -207,10 +206,10 @@ export default function AdminPage() {
       }
     }
     
-    loadData()
-  }, [user, router, activeTab])
+    loadAdminData()
+  }, [user, facilityUser, router, activeTab])
 
-  if (!user) {
+  if (!user || !facilityUser) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
