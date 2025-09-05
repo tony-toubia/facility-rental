@@ -186,30 +186,29 @@ export default function AdminPage() {
   const [expandedFacility, setExpandedFacility] = useState<string | null>(null)
   const [facilityReviews, setFacilityReviews] = useState<{[key: string]: FacilityReview}>({})
 
-  // Redirect if not authenticated
+  // Redirect if not authenticated - only after auth loading is complete
   useEffect(() => {
     if (!authLoading && !user) {
+      console.log('Admin: No user found, redirecting to login')
       router.push('/login')
+    } else if (!authLoading && user) {
+      console.log('Admin: User authenticated, proceeding with admin page')
     }
   }, [user, authLoading, router])
 
-  // Load pending facilities on initial mount when user becomes available
+  // Load pending facilities only when user is confirmed and on review tab
   useEffect(() => {
-    if (activeTab === 'review' && user && !authLoading && pendingFacilities.length === 0) {
+    if (user && !authLoading && activeTab === 'review' && pendingFacilities.length === 0) {
+      console.log('Admin: Loading pending facilities for authenticated user')
       loadPendingFacilities()
     }
-  }, [authLoading]) // Only run when auth loading changes (initial load)
-
-  // Load pending facilities when switching to review tab
-  useEffect(() => {
-    if (activeTab === 'review' && user && pendingFacilities.length === 0) {
-      loadPendingFacilities()
-    }
-  }, [activeTab])
+  }, [user, authLoading, activeTab]) // Include all dependencies
 
   const loadPendingFacilities = async () => {
+    console.log('Admin: Starting to load pending facilities')
     setReviewLoading(true)
     try {
+      console.log('Admin: Executing database query for pending facilities')
       const { data, error } = await supabase
         .from('facility_facilities')
         .select(`
@@ -240,33 +239,45 @@ export default function AdminPage() {
         .order('created_at', { ascending: false })
 
       if (error) {
-        console.error('Error loading pending facilities:', error)
+        console.error('Admin: Database error loading pending facilities:', error)
+        console.error('Admin: Error details:', {
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+          code: error.code
+        })
         setMessage(`❌ Error loading facilities: ${error.message}`)
       } else {
-        console.log('Loaded facilities:', data)
+        console.log('Admin: Successfully loaded facilities:', data?.length || 0, 'facilities')
         setPendingFacilities(data || [])
-        
+
         // Load existing reviews for these facilities (get latest review per facility)
         if (data && data.length > 0) {
+          console.log('Admin: Loading reviews for facilities')
           const facilityIds = data.map(f => f.id)
-          const { data: reviews } = await supabase
+          const { data: reviews, error: reviewError } = await supabase
             .from('facility_reviews')
             .select('*')
             .in('facility_id', facilityIds)
             .order('updated_at', { ascending: false })
-          
-          const reviewsMap: {[key: string]: FacilityReview} = {}
-          reviews?.forEach(review => {
-            // Only keep the latest review per facility (first one due to ordering)
-            if (!reviewsMap[review.facility_id]) {
-              reviewsMap[review.facility_id] = review
-            }
-          })
-          setFacilityReviews(reviewsMap)
+
+          if (reviewError) {
+            console.error('Admin: Error loading reviews:', reviewError)
+          } else {
+            console.log('Admin: Loaded reviews:', reviews?.length || 0)
+            const reviewsMap: {[key: string]: FacilityReview} = {}
+            reviews?.forEach(review => {
+              // Only keep the latest review per facility (first one due to ordering)
+              if (!reviewsMap[review.facility_id]) {
+                reviewsMap[review.facility_id] = review
+              }
+            })
+            setFacilityReviews(reviewsMap)
+          }
         }
       }
     } catch (err) {
-      console.error('Error:', err)
+      console.error('Admin: Exception in loadPendingFacilities:', err)
       setMessage(`❌ Error: ${err}`)
     } finally {
       setReviewLoading(false)
