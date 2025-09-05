@@ -21,6 +21,7 @@ interface AuthContextType {
   }) => Promise<{ error: any }>
   signOut: () => Promise<void>
   refreshFacilityUser: () => Promise<void>
+  prefetchAdminData: () => Promise<void> // New function to prefetch admin data
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -299,6 +300,46 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
+  // Pre-fetch admin data to avoid re-auth on admin page
+  const prefetchAdminData = async () => {
+    console.log('Pre-fetching admin data...')
+    
+    // Ensure we have the latest auth session
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+    if (sessionError) {
+      console.error('Error pre-fetching session:', sessionError)
+      return
+    }
+    
+    if (!session?.user) {
+      console.log('No valid session found during pre-fetch')
+      return
+    }
+    
+    // Make sure user state is set
+    if (!user) {
+      setUser(session.user)
+      currentUserRef.current = session.user
+    }
+    
+    // Pre-fetch pending facilities for admin page
+    try {
+      console.log('Pre-fetching pending facilities...')
+      await supabase
+        .from('facility_facilities')
+        .select(`
+          id,
+          status
+        `)
+        .in('status', ['pending_approval', 'needs_changes'])
+        .limit(1) // Just fetch minimal data to warm up the connection
+      
+      console.log('Admin data pre-fetched successfully')
+    } catch (err) {
+      console.error('Error pre-fetching admin data:', err)
+    }
+  }
+
   const value = {
     user,
     facilityUser,
@@ -306,7 +347,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     signIn,
     signUp,
     signOut,
-    refreshFacilityUser
+    refreshFacilityUser,
+    prefetchAdminData
   }
 
   return (

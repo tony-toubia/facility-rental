@@ -43,9 +43,7 @@ export default function Header() {
                 </Link>
                 <span className="text-gray-700">
                   Welcome, {facilityUser?.first_name || user?.email?.split('@')[0] || 'User'}
-                  {user && !facilityUser && loading && (
-                    <span className="ml-1 text-xs text-gray-500">(loading profile...)</span>
-                  )}
+                  {/* Removed loading indicator for better UX */}
                   {user && !facilityUser?.first_name && facilityUser && (
                     <button
                       onClick={refreshFacilityUser}
@@ -125,9 +123,7 @@ export default function Header() {
                     </Link>
                     <span className="text-gray-700">
                       Welcome, {facilityUser?.first_name || user?.email?.split('@')[0] || 'User'}
-                      {user && !facilityUser && loading && (
-                        <span className="ml-1 text-xs text-gray-500">(loading profile...)</span>
-                      )}
+                      {/* Removed loading indicator for better UX */}
                       {user && !facilityUser?.first_name && facilityUser && (
                         <button
                           onClick={refreshFacilityUser}

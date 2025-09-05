@@ -199,7 +199,13 @@ export default function AdminPage() {
   useEffect(() => {
     if (user && !authLoading && activeTab === 'review' && !facilitiesLoadedRef.current) {
       console.log('Admin: Loading pending facilities for authenticated user')
-      loadPendingFacilities()
+      
+      // Use a small delay to ensure auth state is fully established
+      const timer = setTimeout(() => {
+        loadPendingFacilities()
+      }, 300)
+      
+      return () => clearTimeout(timer)
     }
   }, [user, authLoading, activeTab]) // Removed facilityUser dependency
 

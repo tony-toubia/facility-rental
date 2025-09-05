@@ -11,7 +11,7 @@ import type { Facility } from '@/types'
 
 export default function DashboardPage() {
   const router = useRouter()
-  const { user, facilityUser } = useAuth()
+  const { user, facilityUser, prefetchAdminData } = useAuth()
   const [facilities, setFacilities] = useState<Facility[]>([])
   const [selectedFacility, setSelectedFacility] = useState<Facility | null>(null)
   const [currentView, setCurrentView] = useState<'overview' | 'availability' | 'bookings' | 'analytics'>('overview')
@@ -146,12 +146,31 @@ export default function DashboardPage() {
                   </button>
                 ))}
               </div>
-              <div className="p-4 border-t border-gray-200">
+              <div className="p-4 border-t border-gray-200 space-y-3">
                 <button
                   onClick={() => router.push('/list-facility')}
                   className="w-full btn-primary text-sm"
                 >
                   Add New Facility
+                </button>
+                
+                {/* Admin link with prefetching */}
+                <button
+                  onClick={async () => {
+                    try {
+                      // Prefetch admin data before navigating
+                      await prefetchAdminData();
+                      router.push('/admin');
+                    } catch (error) {
+                      console.error('Error prefetching admin data:', error);
+                      // Still navigate even if prefetch fails
+                      router.push('/admin');
+                    }
+                  }}
+                  className="w-full btn-secondary text-sm flex items-center justify-center"
+                >
+                  <Settings className="w-4 h-4 mr-2" />
+                  Admin Panel
                 </button>
               </div>
             </div>
