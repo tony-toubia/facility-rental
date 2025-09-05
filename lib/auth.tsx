@@ -1,6 +1,6 @@
 'use client'
 
-import { createContext, useContext, useEffect, useState, useRef } from 'react'
+import { createContext, useContext, useEffect, useState, useRef, useMemo } from 'react'
 import { User } from '@supabase/supabase-js'
 import { supabase } from './supabase'
 import { FacilityUser } from '@/types'
@@ -289,7 +289,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
-  const value = {
+  const value = useMemo(() => ({
     user,
     facilityUser,
     loading,
@@ -297,7 +297,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     signUp,
     signOut,
     refreshFacilityUser
-  }
+  }), [user, facilityUser, loading])
 
   return (
     <AuthContext.Provider value={value}>

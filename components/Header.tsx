@@ -1,11 +1,11 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, memo } from 'react'
 import Link from 'next/link'
 import { Menu, X, MapPin, User, LogOut } from 'lucide-react'
 import { useAuth } from '@/lib/auth'
 
-export default function Header() {
+function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const { user, signOut, loading } = useAuth()
   
@@ -155,3 +155,6 @@ export default function Header() {
     </header>
   )
 }
+
+// Memoize the Header component to prevent unnecessary re-renders during navigation
+export default memo(Header)
