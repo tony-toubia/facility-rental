@@ -51,6 +51,9 @@ interface Facility {
   facility_features?: {
     name: string
   }[]
+  facility_categories?: {
+    name: string
+  }[]
 }
 
 
@@ -151,6 +154,9 @@ export default function BrowsePage() {
               ),
               facility_features (
                 name
+              ),
+              facility_categories (
+                name
               )
             `)
             // Temporarily show all facilities to debug
@@ -193,6 +199,9 @@ export default function BrowsePage() {
               icon_name
             ),
             facility_features (
+              name
+            ),
+            facility_categories (
               name
             )
           `)
@@ -578,6 +587,7 @@ export default function BrowsePage() {
                   const location = `${facility.city}, ${facility.state}`
                   const features = facility.facility_features?.map(f => f.name) || []
                   const amenities = facility.facility_amenities?.map(a => a.name) || []
+                  const categories = facility.facility_categories?.map(c => c.name) || []
                   const allFeatures = [...features, ...amenities].slice(0, 3) // Show max 3 features
                   
                   return (
@@ -621,9 +631,9 @@ export default function BrowsePage() {
                         <div className="flex items-center justify-between mb-2">
                           {/* Categories on the left */}
                           <div className="flex items-center space-x-2 flex-1 min-w-0">
-                            {facility.categories && facility.categories.length > 0 && (
+                            {categories && categories.length > 0 && (
                               <div className="flex items-center space-x-1 flex-wrap gap-1">
-                                {facility.categories.slice(0, 2).map((category, index) => {
+                                {categories.slice(0, 2).map((category, index) => {
                                   const isPrimary = category === facility.primary_category
                                   return (
                                     <span
@@ -638,9 +648,9 @@ export default function BrowsePage() {
                                     </span>
                                   )
                                 })}
-                                {facility.categories.length > 2 && (
+                                {categories.length > 2 && (
                                   <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-full">
-                                    +{facility.categories.length - 2}
+                                    +{categories.length - 2}
                                   </span>
                                 )}
                               </div>
