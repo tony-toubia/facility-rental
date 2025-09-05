@@ -485,17 +485,110 @@ export default function AdminPage() {
   const testConnection = async () => {
     setLoading(true)
     setMessage('')
-    
+
     try {
-      const { data, error } = await supabase
+      // Test basic connection
+      const { data: testData, error: testError } = await supabase
         .from('facility_categories')
         .select('count')
         .limit(1)
-      
-      if (error) {
-        setMessage(`❌ Connection failed: ${error.message}`)
+
+      if (testError) {
+        setMessage(`❌ Connection failed: ${testError.message}`)
+        return
+      }
+
+      // Test facility_users table access
+      const { data: userData, error: userError } = await supabase
+        .from('facility_users')
+        .select('count')
+        .limit(1)
+
+      if (userError) {
+        setMessage(`❌ facility_users table access failed: ${userError.message}\n\n💡 This might be due to RLS policies or missing table.`)
+        return
+      }
+
+      // Test current user's facility user record
+      if (user) {
+        const { data: currentUserData, error: currentUserError } = await supabase
+          .from('facility_users')
+          .select('*')
+          .eq('auth_user_id', user.id)
+          .maybeSingle()
+
+        if (currentUserError) {
+          setMessage(`❌ Error checking current user: ${currentUserError.message}`)
+          return
+        }
+
+        if (!currentUserData) {
+          setMessage(`⚠️ No facility user record found for current user.\n\n✅ Database connection: OK\n✅ facility_users table: Accessible\n❌ User record: Missing`)
+        } else {
+          setMessage(`✅ Database fully accessible!\n✅ Connection: OK\n✅ facility_users table: OK\n✅ User record: Found (${currentUserData.first_name} ${currentUserData.last_name})`)
+        }
       } else {
-        setMessage('✅ Successfully connected to Supabase!')
+        setMessage('✅ Database connection successful, but no authenticated user.')
+      }
+    } catch (err) {
+      setMessage(`❌ Error: ${err}`)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const createCurrentUserRecord = async () => {
+    if (!user) {
+      setMessage('❌ No authenticated user found')
+      return
+    }
+
+    setLoading(true)
+    setMessage('')
+
+    try {
+      // Check if user record already exists
+      const { data: existingUser, error: checkError } = await supabase
+        .from('facility_users')
+        .select('*')
+        .eq('auth_user_id', user.id)
+        .maybeSingle()
+
+      if (checkError) {
+        setMessage(`❌ Error checking existing user: ${checkError.message}`)
+        return
+      }
+
+      if (existingUser) {
+        setMessage(`✅ User record already exists: ${existingUser.first_name} ${existingUser.last_name}`)
+        return
+      }
+
+      // Create facility user record
+      const userData = {
+        auth_user_id: user.id,
+        first_name: user.user_metadata?.first_name || user.user_metadata?.firstName || 'User',
+        last_name: user.user_metadata?.last_name || user.user_metadata?.lastName || '',
+        email: user.email || '',
+        user_type: user.user_metadata?.user_type || user.user_metadata?.userType || 'renter',
+        city: user.user_metadata?.city || '',
+        state: user.user_metadata?.state || '',
+        zip_code: user.user_metadata?.zip_code || '',
+        country: 'US'
+      }
+
+      const { data, error } = await supabase
+        .from('facility_users')
+        .insert(userData)
+        .select()
+        .single()
+
+      if (error) {
+        setMessage(`❌ Failed to create facility user: ${error.message}\n\n💡 This might be due to RLS policies. Check your Supabase dashboard.`)
+      } else {
+        setMessage(`✅ Created facility user record: ${data.first_name} ${data.last_name}`)
+        // Refresh the auth context to pick up the new user data
+        window.location.reload()
       }
     } catch (err) {
       setMessage(`❌ Error: ${err}`)
@@ -507,12 +600,12 @@ export default function AdminPage() {
   const createSampleUser = async () => {
     setLoading(true)
     setMessage('')
-    
+
     try {
       // First try to create a Supabase auth user
       const email = `test.user.${Date.now()}@example.com`
       const password = 'testpassword123'
-      
+
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email,
         password,
@@ -546,7 +639,7 @@ export default function AdminPage() {
         })
         .select()
         .single()
-      
+
       if (error) {
         setMessage(`❌ Failed to create facility user: ${error.message}\n\n💡 This might be due to RLS policies. Try running the fix-rls-policies.sql script in your Supabase SQL editor.`)
       } else {
@@ -1144,15 +1237,26 @@ export default function AdminPage() {
             <div className="border-b pb-6">
               <h2 className="text-xl font-semibold mb-4">Database Connection</h2>
               <p className="text-gray-600 mb-4">
-                Test the connection to your Supabase database.
+                Test the connection to your Supabase database and check user records.
               </p>
-              <button
-                onClick={testConnection}
-                disabled={loading}
-                className="btn-primary"
-              >
-                {loading ? 'Testing...' : 'Test Connection'}
-              </button>
+              <div className="space-x-4">
+                <button
+                  onClick={testConnection}
+                  disabled={loading}
+                  className="btn-primary"
+                >
+                  {loading ? 'Testing...' : 'Test Connection'}
+                </button>
+                {user && (
+                  <button
+                    onClick={createCurrentUserRecord}
+                    disabled={loading}
+                    className="btn-secondary"
+                  >
+                    {loading ? 'Creating...' : 'Create My User Record'}
+                  </button>
+                )}
+              </div>
             </div>
 
             <div className="border-b pb-6">

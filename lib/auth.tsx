@@ -120,15 +120,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const loadFacilityUser = async (authUserId: string) => {
     try {
+      console.log('Auth: Loading facility user for auth ID:', authUserId)
       let facilityUser = await getFacilityUserByAuthId(authUserId)
-      
+      console.log('Auth: Facility user lookup result:', facilityUser)
+
       // If no facility user exists, create one from auth user data
       if (!facilityUser) {
+        console.log('Auth: No facility user found, attempting to create one...')
         const { data: authUser, error: authError } = await supabase.auth.getUser()
-        
-        if (authUser.user) {
+
+        if (authError) {
+          console.error('Auth: Error getting auth user:', authError)
+        } else if (authUser.user) {
           const userData = authUser.user.user_metadata || {}
-          
+
           const newUserData = {
             auth_user_id: authUserId,
             first_name: userData.first_name || userData.firstName || 'User',
@@ -139,14 +144,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             state: userData.state || '',
             zip_code: userData.zip_code || ''
           }
-          
+
+          console.log('Auth: Creating facility user with data:', newUserData)
           facilityUser = await createFacilityUser(newUserData)
+          console.log('Auth: Facility user creation result:', facilityUser)
+        } else {
+          console.log('Auth: No auth user data available')
         }
       }
-      
+
+      console.log('Auth: Setting facility user:', facilityUser)
       setFacilityUser(facilityUser)
     } catch (error) {
-      console.error('Error in loadFacilityUser:', error)
+      console.error('Auth: Error in loadFacilityUser:', error)
       setFacilityUser(null)
     } finally {
       setLoading(false)
