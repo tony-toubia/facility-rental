@@ -21,7 +21,6 @@ interface AuthContextType {
   }) => Promise<{ error: any }>
   signOut: () => Promise<void>
   refreshFacilityUser: () => Promise<void>
-  prefetchAdminData: () => Promise<void> // New function to prefetch admin data
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
