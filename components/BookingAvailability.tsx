@@ -150,7 +150,7 @@ export default function BookingAvailability({
         const dateExceptions = (exceptions || []).filter(ex => ex.exception_date === dateString)
         
         // Process time slots
-        const timeSlots = dayAvailability.map(slot => ({
+        const timeSlots: TimeSlot[] = dayAvailability.map(slot => ({
           start_time: slot.start_time,
           end_time: slot.end_time,
           is_available: slot.is_available,
