@@ -511,7 +511,7 @@ export default function BookingAvailability({
               setSelectedDate('')
               setSelectedTimeSlot(null)
               setBookingStep('date')
-              setDuration(minimumRentalDuration) // Reset duration to minimum
+              setDuration(minimumRentalDuration || availabilityIncrement) // Reset duration to minimum
             }}
             className="w-full text-sm text-gray-600 hover:text-gray-800 py-2"
           >

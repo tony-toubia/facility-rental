@@ -275,9 +275,9 @@ async function populateTestData() {
 
     // 5. Link facilities with amenities and features
     console.log('📝 Linking facilities with amenities and features...')
-    
-    const facilityAmenities = []
-    const facilityFeatures = []
+
+    const facilityAmenities: Array<{ facility_id: string; amenity_id: string }> = []
+    const facilityFeatures: Array<{ facility_id: string; feature_id: string }> = []
 
     facilitiesData?.forEach((facility, index) => {
       // Add 3-4 random amenities per facility
@@ -329,8 +329,8 @@ async function populateTestData() {
 
     // 6. Create sample images
     console.log('📝 Creating sample images...')
-    
-    const sampleImages = []
+
+    const sampleImages: Array<{ facility_id: string; image_url: string; alt_text: string; is_primary: boolean }> = []
     facilitiesData?.forEach((facility, index) => {
       // Add 2-3 images per facility
       const imageCount = 2 + Math.floor(Math.random() * 2)
@@ -358,8 +358,8 @@ async function populateTestData() {
 
     // 7. Create availability data
     console.log('📝 Creating availability data...')
-    
-    const availabilityData = []
+
+    const availabilityData: Array<{ facility_id: string; day_of_week: number; start_time: string; end_time: string; is_available: boolean; timezone: string }> = []
     facilitiesData?.forEach(facility => {
       // Create availability for each day of the week
       for (let dayOfWeek = 0; dayOfWeek < 7; dayOfWeek++) {
