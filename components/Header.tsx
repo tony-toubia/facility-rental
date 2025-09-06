@@ -39,7 +39,10 @@ function Header() {
 
           {/* Desktop Auth Buttons */}
           <div className="hidden md:flex items-center space-x-4">
-            {user ? (
+            {loading ? (
+              // Show nothing while loading to prevent flash
+              <div className="w-32 h-8"></div>
+            ) : user ? (
               <>
                 <Link href="/dashboard" className="text-gray-700 hover:text-primary-600 transition-colors">
                   Dashboard
@@ -105,7 +108,10 @@ function Header() {
                 List Your Facility
               </Link>
               <div className="flex flex-col space-y-2 pt-4 border-t">
-                {user ? (
+                {loading ? (
+                  // Show nothing while loading to prevent flash
+                  <div className="h-8"></div>
+                ) : user ? (
                   <>
                     <Link 
                       href="/dashboard" 

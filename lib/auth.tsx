@@ -61,6 +61,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       console.log('Checking initial session...')
 
+      // Set a fallback timeout to ensure loading doesn't hang indefinitely
+      const timeoutId = setTimeout(() => {
+        if (!isInitialized.current) {
+          console.log('Auth: Timeout reached during initial session check, forcing completion')
+          setLoading(false)
+          isInitialized.current = true
+        }
+      }, 8000) // 8 second timeout
+
       try {
         const { data: { session }, error } = await supabase.auth.getSession()
         console.log('Initial session result:', session?.user?.id || 'no session', error?.message || 'no error')
@@ -70,6 +79,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setUser(null)
           setFacilityUser(null)
           setLoading(false)
+          clearTimeout(timeoutId)
           return
         }
 
@@ -88,6 +98,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             isInitialized.current = true
           }
         }
+        clearTimeout(timeoutId)
       } catch (error) {
         console.error('Error checking initial session:', error)
         setUser(null)
@@ -96,6 +107,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setLoading(false)
           isInitialized.current = true
         }
+        clearTimeout(timeoutId)
       }
     }
 
@@ -189,8 +201,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.error('Auth: Error loading facility user:', error)
       setFacilityUser(null)
     } finally {
-      // Only set loading to false on the very first initialization
-      if (isInitialLoad && !isInitialized.current) {
+      // Always set loading to false on initial load to prevent hanging
+      if (isInitialLoad) {
+        console.log('Auth: Setting loading to false after initial load')
         setLoading(false)
         isInitialized.current = true
       }
@@ -297,7 +310,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     signUp,
     signOut,
     refreshFacilityUser
-  }), [user, facilityUser, loading])
+  }), [user, facilityUser, loading, signIn, signUp, signOut, refreshFacilityUser])
 
   return (
     <AuthContext.Provider value={value}>

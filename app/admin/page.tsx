@@ -193,15 +193,25 @@ export default function AdminPage() {
   const [reviewLoading, setReviewLoading] = useState(false)
   const [expandedFacility, setExpandedFacility] = useState<string | null>(null)
   const [facilityReviews, setFacilityReviews] = useState<{[key: string]: FacilityReview}>({})
+  const [hasLoadedInitially, setHasLoadedInitially] = useState(false)
 
   useEffect(() => {
     // Only redirect when loading is complete and no user exists
     if (!loading && !user) {
+      console.log('Admin: No user found, redirecting to login')
       router.push('/login')
+    } else if (!loading && user) {
+      console.log('Admin: User found:', user.email)
     }
   }, [loading, user, router])
 
-  const loadPendingFacilities = useCallback(async () => {
+  const loadPendingFacilities = useCallback(async (force = false) => {
+    // Prevent loading if already loaded and not forced
+    if (hasLoadedInitially && !force) {
+      console.log('Admin: Skipping load - already loaded')
+      return
+    }
+    
     setReviewLoading(true)
     try {
       const { data, error } = await supabase
@@ -258,6 +268,9 @@ export default function AdminPage() {
           })
           setFacilityReviews(reviewsMap)
         }
+        
+        // Mark as loaded successfully
+        setHasLoadedInitially(true)
       }
     } catch (err) {
       console.error('Error:', err)
@@ -265,14 +278,37 @@ export default function AdminPage() {
     } finally {
       setReviewLoading(false)
     }
-  }, [])
+  }, [hasLoadedInitially])
 
-  // Load pending facilities when switching to review tab
+  // Load pending facilities when switching to review tab - only trigger on meaningful changes
   useEffect(() => {
-    if (activeTab === 'review' && user && !loading && pendingFacilities.length === 0) {
+    // Only load if we're on review tab, have a user, not loading, and haven't loaded facilities yet
+    if (activeTab === 'review' && user && !loading && !hasLoadedInitially) {
+      console.log('Admin: Loading facilities for first time on review tab')
       loadPendingFacilities()
     }
-  }, [activeTab, user, loading, pendingFacilities.length, loadPendingFacilities])
+  }, [activeTab, user, loading, hasLoadedInitially]) // Control loading with hasLoadedInitially flag
+
+  // Prevent unnecessary reloads on window focus/visibility changes
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      // Don't reload when window becomes visible again
+      console.log('Admin: Window visibility changed, but not reloading')
+    }
+    
+    const handleFocus = () => {
+      // Don't reload when window regains focus
+      console.log('Admin: Window focused, but not reloading')
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    window.addEventListener('focus', handleFocus)
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+      window.removeEventListener('focus', handleFocus)
+    }
+  }, [])
 
   const initializeReview = useCallback((facilityId: string): FacilityReview => {
     return {
@@ -397,7 +433,7 @@ export default function AdminPage() {
       }
 
       setMessage('✅ Facility approved successfully!')
-      loadPendingFacilities()
+      loadPendingFacilities(true)
     } catch (err: any) {
       setMessage(`❌ Error approving facility: ${err.message}`)
     }
@@ -443,7 +479,7 @@ export default function AdminPage() {
       }
 
       setMessage('✅ Facility rejected with feedback. Owner will be notified.')
-      loadPendingFacilities()
+      loadPendingFacilities(true)
     } catch (err: any) {
       setMessage(`❌ Error rejecting facility: ${err.message}`)
     }
@@ -453,8 +489,13 @@ export default function AdminPage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-        <span className="ml-2 text-gray-600">Loading...</span>
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-2 text-gray-600">Loading authentication...</p>
+          <p className="text-xs text-gray-400 mt-1">
+            Loading: {loading ? 'true' : 'false'} | User: {user ? user.email : 'null'}
+          </p>
+        </div>
       </div>
     )
   }
@@ -531,7 +572,7 @@ export default function AdminPage() {
                   Pending Facility Reviews
                 </h2>
                 <button
-                  onClick={loadPendingFacilities}
+                  onClick={() => loadPendingFacilities(true)}
                   disabled={reviewLoading}
                   className="btn-secondary"
                 >

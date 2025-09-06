@@ -17,8 +17,15 @@ export default function DashboardPage() {
   const [currentView, setCurrentView] = useState<'overview' | 'availability' | 'bookings' | 'analytics'>('overview')
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState('')
+  const [hasLoadedInitially, setHasLoadedInitially] = useState(false)
 
-  const loadFacilities = useCallback(async () => {
+  const loadFacilities = useCallback(async (force = false) => {
+    // Prevent loading if already loaded and not forced
+    if (hasLoadedInitially && !force) {
+      console.log('Dashboard: Skipping load - already loaded')
+      return
+    }
+
     try {
       setIsLoading(true)
       const userFacilities = await getFacilitiesByOwner(facilityUser?.id || user?.id || '')
@@ -31,20 +38,48 @@ export default function DashboardPage() {
         }
         return prev
       })
+      
+      // Mark as loaded successfully
+      setHasLoadedInitially(true)
     } catch (err: any) {
       setError(err.message || 'Failed to load facilities')
     } finally {
       setIsLoading(false)
     }
-  }, [facilityUser?.id, user?.id])
+  }, [facilityUser?.id, user?.id, hasLoadedInitially])
 
   useEffect(() => {
     if (!user || !facilityUser) {
       router.push('/login')
       return
     }
-    loadFacilities()
-  }, [user, facilityUser, router])
+    // Only load if we haven't loaded before
+    if (!hasLoadedInitially) {
+      console.log('Dashboard: Loading facilities for first time')
+      loadFacilities()
+    }
+  }, [user, facilityUser, router, hasLoadedInitially, loadFacilities])
+
+  // Prevent unnecessary reloads on window focus/visibility changes
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      // Don't reload when window becomes visible again
+      console.log('Dashboard: Window visibility changed, but not reloading')
+    }
+    
+    const handleFocus = () => {
+      // Don't reload when window regains focus
+      console.log('Dashboard: Window focused, but not reloading')
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    window.addEventListener('focus', handleFocus)
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+      window.removeEventListener('focus', handleFocus)
+    }
+  }, [])
 
   if (!user || !facilityUser) {
     return (
@@ -98,9 +133,21 @@ export default function DashboardPage() {
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Facility Dashboard</h1>
-          <p className="text-gray-600">Manage your facilities and bookings</p>
+        <div className="mb-8 flex justify-between items-center">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Facility Dashboard</h1>
+            <p className="text-gray-600">Manage your facilities and bookings</p>
+          </div>
+          <button
+            onClick={() => loadFacilities(true)}
+            disabled={isLoading}
+            className="btn-secondary flex items-center"
+          >
+            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+            {isLoading ? 'Loading...' : 'Refresh'}
+          </button>
         </div>
 
         {error && (
